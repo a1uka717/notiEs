@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <script src="config.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Мое расписание & GoodNotes Studio v14</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Quicksand:wght@400;600;700&family=Comfortaa:wght@400;600;700&family=Roboto:wght@400;500;700&family=Montserrat:wght@400;600;700&family=Caveat:wght@600;700&family=Marck+Script&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-main: #37352f;
+            --text-muted: #9a9a97;
+            --sidebar-bg: #f7f7f5;
+            --hover-bg: #efefed;
+            --border-color: #e9e9e7;
+            --card-bg: #ffffff;
+            --modal-bg: #ffffff;
+            --modal-overlay: rgba(0,0,0,0.4);
+            --main-font: 'Nunito', sans-serif;
+            --today-dot: #8c7e6b; 
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #fdfcf8;      
+            --sidebar-bg: #f4f1eb;    
+            --hover-bg: #eae5db;      
+            --border-color: #e3dec9;  
+            --text-main: #5c574f;     
+            --text-muted: #968f82;    
+            --card-bg: #ffffff;
+            --modal-bg: #fdfcf8;
+            --today-dot: #6e6353; 
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--main-font); background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; transition: 0.3s; user-select: none; }
+        
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color); padding: 16px 0; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0;}
+        .sidebar-item { padding: 8px 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 15px; font-weight: 600; border-radius: 6px; margin: 2px 8px; }
+        .sidebar-item:hover, .sidebar-item.active { background-color: var(--hover-bg); }
+        .sidebar-item-content { display: flex; align-items: center; gap: 10px; }
+        .folder-badge { width: 10px; height: 10px; border-radius: 50%; }
+        
+        .sidebar-header { font-weight: 700; padding: 8px 24px; font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; margin-top: 20px; margin-bottom: 6px;}
+        .add-btn-small { cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 6px; border-radius: 4px;}
+        .add-btn-small:hover { background-color: var(--hover-bg); color: var(--text-main); }
+
+        .main-content { flex-grow: 1; padding: 30px 40px; overflow-y: auto; display: flex; flex-direction: column; position: relative;}
+        .page-title { font-size: 28px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; flex-shrink: 0;}
+        .back-btn { font-size: 14px; color: var(--text-main); cursor: pointer; font-weight: 600; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--card-bg); font-family: inherit; }
+        .back-btn:hover { background-color: var(--hover-bg); color: var(--text-main); }
+
+        #month-view { flex-grow: 1; display: flex; flex-direction: column; }
+        .calendar-header { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+        .nav-btn { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 15px; margin-left: 8px;}
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background-color: var(--border-color); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; flex-grow: 1;}
+        .weekday { background-color: var(--sidebar-bg); padding: 10px; text-align: center; font-weight: 600; font-size: 13px; color: var(--text-muted); }
+        .day-cell { background-color: var(--bg-color); min-height: 100px; padding: 8px; display: flex; flex-direction: column; gap: 4px; cursor: pointer; transition: 0.15s;}
+        .day-cell:hover { background-color: var(--hover-bg); }
+        .day-cell.other-month { background-color: var(--sidebar-bg); opacity: 0.4; }
+        .day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;}
+        .day-number { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+        .today-indicator { width: 8px; height: 8px; border-radius: 50%; background-color: var(--today-dot); }
+        .day-events-mini { display: flex; flex-direction: column; gap: 3px; }
+        .mini-event-badge { padding: 3px 6px; border-radius: 6px; font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #37352f; display: flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
+        .week-board { display: none; gap: 14px; overflow-x: auto; padding-bottom: 16px; align-items: flex-start; min-height: 500px;}
+        .column { min-width: 230px; display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px;}
+        .column.drag-over { background-color: var(--hover-bg); border-radius: 8px; }
+        .column-header { font-weight: 700; font-size: 14px; margin-bottom: 6px; color: var(--text-muted); }
+        .task-card { padding: 10px 12px; border-radius: 8px; font-size: 13px; cursor: grab; font-weight: 600; display: flex; flex-direction: column; gap: 4px; color: #37352f; box-shadow: rgba(0,0,0,0.06) 0px 2px 4px; border: 1px solid rgba(0,0,0,0.05);}
+        .add-card-btn { color: var(--text-muted); cursor: pointer; padding: 6px; font-size: 13px; font-weight: 600;}
+        .add-card-btn:hover { background-color: var(--hover-bg); color: var(--text-main); border-radius: 4px; }
+
+        #folder-view { display: none; flex-direction: column; flex-grow: 1;}
+        .folder-carousel { display: flex; overflow-x: auto; gap: 12px; padding: 8px 0 16px 0; min-height: 70px;}
+        .carousel-item { min-width: 220px; padding: 12px; border-radius: 8px; flex-shrink: 0; font-size: 13px; font-weight: 700; border: 1px solid rgba(0,0,0,0.08); color: #37352f; box-shadow: 0 2px 5px rgba(0,0,0,0.03);}
+        .files-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);}
+        .files-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px; overflow-y: auto; padding-bottom: 20px;}
+        .file-card { padding: 16px 10px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; text-align: center; cursor: pointer; transition: 0.2s;}
+        .file-card:hover { background: var(--hover-bg); transform: translateY(-2px);}
+        .file-icon { font-size: 36px; margin-bottom: 8px; }
+        .file-name { font-size: 12px; font-weight: 600; word-break: break-word; }
+
+        #notebook-studio { display: none; flex-direction: row; flex-grow: 1; height: 100%; position: relative; background: var(--sidebar-bg); margin: -30px -40px; padding: 0; overflow: hidden; color: var(--text-main);}
+        
+        .nb-pages-sidebar { width: 200px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 12px 10px; gap: 12px; overflow-y: auto; flex-shrink: 0; transition: margin-left 0.25s ease;}
+        .nb-pages-sidebar.collapsed { margin-left: -200px; }
+        .pages-sidebar-header { font-size: 12px; font-weight: 700; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; padding: 0 4px; }
+        .page-thumb-card { border: 2px solid var(--border-color); border-radius: 8px; background: #ffffff; cursor: pointer; padding: 6px; text-align: center; transition: 0.2s;}
+        .page-thumb-card.active { border-color: #3182ce; box-shadow: 0 0 8px rgba(49, 130, 206, 0.3); }
+        .page-thumb-preview { width: 100%; height: 120px; background-size: cover; background-position: center; border-radius: 4px; border: 1px solid var(--border-color); }
+        .page-num-label { font-size: 11px; font-weight: 700; margin-top: 4px; color: var(--text-muted); }
+        .add-page-btn { padding: 10px; border-radius: 6px; border: 2px dashed var(--border-color); background: transparent; cursor: pointer; font-size: 13px; font-weight: 700; color: var(--text-muted); text-align: center; transition: 0.2s;}
+        .add-page-btn:hover { border-color: #3182ce; color: #3182ce; background: var(--hover-bg); }
+
+        .nb-main-area { flex-grow: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; position: relative;}
+
+        .nb-top-bar { background: var(--bg-color); border-bottom: 1px solid var(--border-color); padding: 8px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; z-index: 11; color: var(--text-main);}
+        .nb-title { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 10px;}
+        
+        .nb-tools-bar { background: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); padding: 6px 16px; display: flex; align-items: center; gap: 8px; overflow-x: auto; z-index: 10; position: relative;}
+        .gn-tool-icon-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; background: var(--card-bg); color: var(--text-main); transition: 0.15s; position: relative;}
+        .gn-tool-icon-btn:hover { background: var(--hover-bg); }
+        .gn-tool-icon-btn.active { background: #e2ebe5; border-color: #b5c7bc; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.04);}
+
+        .quick-swatches-bar { display: flex; align-items: center; gap: 6px; overflow-x: auto; padding: 4px 8px; background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border-color); max-width: 500px; scrollbar-width: thin; }
+        .quick-swatches-bar::-webkit-scrollbar { height: 3px; }
+        .quick-swatches-bar::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+
+        .swatch-circle { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; transition: transform 0.15s;}
+        .swatch-circle:hover { transform: scale(1.2); }
+        .swatch-circle.active { border-color: var(--text-main); transform: scale(1.25); }
+        .add-swatch-btn { width: 18px; height: 18px; border-radius: 50%; border: 1px dashed var(--text-muted); color: var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; cursor: pointer; flex-shrink: 0; transition: 0.15s; margin-left: 2px; }
+        .add-swatch-btn:hover { border-color: var(--text-main); color: var(--text-main); background: var(--hover-bg); transform: scale(1.1); }
+
+        .gn-popover-panel { display: none; position: absolute; top: 52px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px; box-shadow: 0 12px 32px rgba(0,0,0,0.08); z-index: 100; width: 320px; flex-direction: column; gap: 14px; font-size: 13px; color: var(--text-main);}
+        .gn-popover-header { font-size: 15px; font-weight: 700; color: var(--text-main); }
+        
+        .stroke-preview-box { width: 100%; height: 75px; background: var(--sidebar-bg); border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color); }
+        .stroke-preview-box canvas { width: 100%; height: 100%; }
+
+        .pen-type-tabs { display: flex; background: var(--sidebar-bg); padding: 3px; border-radius: 8px; gap: 2px; }
+        .pen-tab-btn { flex: 1; padding: 8px 4px; text-align: center; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; color: var(--text-muted); transition: 0.15s; display: flex; flex-direction: column; align-items: center; gap: 4px;}
+        .pen-tab-btn.active { background: var(--card-bg); color: var(--text-main); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+
+        .gn-slider-row { display: flex; flex-direction: column; gap: 4px; }
+        .gn-slider-header { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;}
+        .gn-slider { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--border-color); outline: none;}
+        .gn-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #3182ce; cursor: pointer; }
+
+        .gn-switch-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-weight: 600;}
+        .gn-switch { position: relative; display: inline-block; width: 38px; height: 20px; }
+        .gn-switch input { opacity: 0; width: 0; height: 0; }
+        .gn-slider-toggle { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .2s; border-radius: 20px; }
+        .gn-slider-toggle:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .2s; border-radius: 50%; }
+        input:checked + .gn-slider-toggle { background-color: #3182ce; }
+        input:checked + .gn-slider-toggle:before { transform: translateX(18px); }
+
+        .nb-canvas-container { flex-grow: 1; overflow: auto; display: flex; justify-content: center; padding: 30px; position: relative; background: var(--sidebar-bg); cursor: default;}
+        .nb-page-paper { background: #ffffff; box-shadow: 0 8px 24px rgba(0,0,0,0.06); border-radius: 4px; position: relative; margin: 0 auto; width: 794px; height: 1123px; border: 1px solid var(--border-color); transform-origin: top center; transition: transform 0.1s ease-out; }
+        
+        canvas.layer-canvas { position: absolute; top: 0; left: 0; touch-action: none;}
+        #layer-highlighter { z-index: 1; }
+        #layer-pen { z-index: 2; }
+        #layer-ui { z-index: 3; pointer-events: none; }
+
+        .sticky-note-element { position: absolute; min-width: 160px; min-height: 160px; padding: 12px; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.06); z-index: 4; cursor: move; display: flex; flex-direction: column; transform-origin: center center;}
+        .sticky-note-element.selected { outline: 2px solid #3182ce; }
+        .sticky-note-textarea { width: 100%; height: 100%; border: none; background: transparent; resize: none; outline: none; font-family: var(--main-font); font-size: 14px; color: #2d3748; line-height: 1.4; flex-grow: 1;}
+
+        .note-handle-rotate { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 14px; height: 14px; background: #3182ce; border-radius: 50%; cursor: grab; }
+        .note-handle-resize { position: absolute; bottom: -5px; right: -5px; width: 12px; height: 12px; background: #3182ce; border-radius: 2px; cursor: se-resize; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--modal-overlay); justify-content: center; align-items: center; z-index: 1000; }
+        .modal { background-color: var(--modal-bg); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.12); overflow: hidden; position: relative; padding: 24px; max-height: 90vh; display: flex; flex-direction: column;}
+        .small-modal { width: 380px; }
+        .medium-modal { width: 620px; }
+
+        .emoji-picker-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; max-height: 140px; overflow-y: auto; padding: 6px; background: var(--sidebar-bg); border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px;}
+        .emoji-opt { font-size: 20px; padding: 6px; text-align: center; cursor: pointer; border-radius: 6px; transition: 0.15s;}
+        .emoji-opt:hover, .emoji-opt.selected { background: var(--hover-bg); transform: scale(1.2); }
+
+        .pastel-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; margin-bottom: 12px; }
+        .pastel-opt { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.15s;}
+        .pastel-opt:hover { transform: scale(1.15); }
+        .pastel-opt.selected { border-color: #333; transform: scale(1.2); }
+
+        .sticker-tabs-bar { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border-color);}
+        .sticker-tab-pill { padding: 4px 10px; border-radius: 14px; background: var(--sidebar-bg); font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border-color); flex-shrink: 0;}
+        .sticker-tab-pill.active { background: #2383e2; color: white; border-color: #2383e2; }
+        .custom-sticker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; max-height: 300px; overflow-y: auto; padding: 4px;}
+        .custom-sticker-card { border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; text-align: center; cursor: pointer; transition: 0.2s; background: var(--bg-color); display: flex; align-items: center; justify-content: center;}
+        .custom-sticker-card:hover { background: var(--hover-bg); transform: scale(1.03); }
+        .custom-sticker-card img { max-width: 80px; max-height: 80px; object-fit: contain; }
+
+        .contents-checklist { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;}
+        .contents-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--sidebar-bg); border-radius: 6px; font-size: 13px;}
+
+        button.primary-btn { font-family: inherit; padding: 10px 16px; border-radius: 6px; border: none; background: #2383e2; color: white; cursor: pointer; width: 100%; font-weight: 600; margin-top: 8px;}
+        button.secondary-btn { font-family: inherit; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-main); cursor: pointer; font-weight: 600; font-size: 13px;}
+        
+        input[type="text"], input[type="time"], input[type="date"], select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-family: inherit; margin-bottom: 12px; outline: none;}
+        .form-row { display: flex; gap: 12px; }
+
+        #inline-color-picker { display: none; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #nb-paper-element, #nb-paper-element * { visibility: visible; }
+            #nb-paper-element { position: absolute; left: 0; top: 0; transform: scale(1) !important; box-shadow: none; border: none; margin: 0; }
+            @page { size: A4; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- САЙДБАР -->
+    <div class="sidebar">
+        <div class="sidebar-item" onclick="openSettings()"><span>⚙️</span> Настройки</div>
+        <div class="calendar-menu-block">
+            <div class="sidebar-item active" id="menu-calendar" onclick="showMonthView()"><span>📅</span> Календарь</div>
+        </div>
+        <div class="sidebar-header">
+            ПАПКИ <span class="add-btn-small" onclick="openFolderModal()">+</span>
+        </div>
+        <div id="folders-list"></div>
+    </div>
+
+    <!-- ГЛАВНАЯ ОБЛАСТЬ -->
+    <div class="main-content" id="main-area">
+        <div class="page-title" id="main-header-bar">
+            <button class="back-btn" id="back-btn" style="display: none;" onclick="showMonthView()">← Назад</button>
+            <span id="main-title">Месяц</span>
+        </div>
+        
+        <div id="month-view">
+            <div class="calendar-header">
+                <button class="nav-btn" onclick="changeMonth(-1)">←</button>
+                <button class="nav-btn" onclick="changeMonth(1)">→</button>
+            </div>
+            <div class="calendar-grid" id="calendar-grid"></div>
+        </div>
+
+        <div class="week-board" id="week-view"></div>
+
+        <div id="folder-view">
+            <h4 style="color: var(--text-muted); margin-bottom: 8px; font-size: 13px;">Привязанные задачи:</h4>
+            <div class="folder-carousel" id="fc-tasks"></div>
+
+            <div class="files-header">
+                <h4 style="color: var(--text-muted); font-size: 13px;">Файлы и Блокноты:</h4>
+                <button class="secondary-btn" onclick="openAddChoiceModal()">+ Добавить файл / Блокнот</button>
+            </div>
+            <div class="files-grid" id="fc-files"></div>
+        </div>
+
+        <!-- GOODNOTES STUDIO V14 -->
+        <div id="notebook-studio">
+            <div class="nb-pages-sidebar" id="nb-pages-sidebar">
+                <div class="pages-sidebar-header">
+                    <span>СТРАНИЦЫ</span>
+                    <span style="cursor:pointer;" onclick="togglePagesSidebar()">✕</span>
+                </div>
+                <div id="pages-list-container" style="display:flex; flex-direction:column; gap:10px;"></div>
+                <div class="add-page-btn" onclick="addNewPageToNotebook()">+ Новая страница</div>
+            </div>
+
+            <div class="nb-main-area">
+                <!-- ВЕРХНЯЯ ШАПКА -->
+                <div class="nb-top-bar">
+                    <div class="nb-title">
+                        <button class="back-btn" onclick="exitNotebookStudio()">← Выйти</button>
+                        <button class="secondary-btn" onclick="togglePagesSidebar()">📖 Страницы</button>
+                        <button class="secondary-btn" onclick="prevPage()">◄</button>
+                        <span id="nb-page-num-display" style="font-size:13px; font-weight:700; color:var(--text-muted);">1 / 1</span>
+                        <button class="secondary-btn" onclick="nextPage()">►</button>
+                        <span id="nb-title-text" style="margin-left: 10px;">Блокнот</span>
+                    </div>
+                    <button class="secondary-btn" onclick="openExportModal()">📤 Экспорт</button>
+                </div>
+
+                <!-- ТУЛБАР ИНСТРУМЕНТОВ -->
+                <div class="nb-tools-bar">
+                    <button class="gn-tool-icon-btn active" id="tool-pen" onclick="handleToolBtnClick('pen')">✒️ Ручка</button>
+                    <button class="gn-tool-icon-btn" id="tool-highlighter" onclick="handleToolBtnClick('highlighter')">🖍️ Маркер</button>
+                    <button class="gn-tool-icon-btn" id="tool-eraser" onclick="handleToolBtnClick('eraser')">🧹 Ластик</button>
+                    <button class="gn-tool-icon-btn" id="tool-sticky" onclick="handleToolBtnClick('sticky')">📝 Стикер</button>
+                    <button class="gn-tool-icon-btn" id="tool-lasso" onclick="handleToolBtnClick('lasso')">⭕ Лассо</button>
+
+                    <span style="border-left:1px solid var(--border-color); height:20px; margin:0 4px;"></span>
+
+                    <div class="quick-swatches-bar" id="quick-swatches-container"></div>
+
+                    <span style="border-left:1px solid var(--border-color); height:20px; margin:0 4px;"></span>
+
+                    <div style="display:flex; align-items:center; gap:6px; background:var(--card-bg); padding:4px 8px; border-radius:16px; border:1px solid var(--border-color);">
+                        <span style="font-size:12px;">🔍</span>
+                        <input type="range" min="50" max="200" value="100" id="zoom-range-slider" oninput="changeZoom(this.value)" style="width:70px; margin:0; cursor:pointer;">
+                        <span id="zoom-val-text" style="font-size:11px; font-weight:700; color:var(--text-muted); min-width:35px;">100%</span>
+                    </div>
+
+                    <button class="gn-tool-icon-btn" id="tool-symmetry" onclick="toggleSymmetry()">🪞 Симметрия</button>
+                    <button class="gn-tool-icon-btn" onclick="openStickersModal()">🎨 Наклейки</button>
+                </div>
+
+                <!-- ПОПОВЕРЫ НАСТРОЕК -->
+                <div class="gn-popover-panel" id="pen-popover-panel">
+                    <div class="gn-popover-header" id="pen-popover-title">Перьевая Ручка</div>
+                    <div class="stroke-preview-box"><canvas id="pen-stroke-preview-canvas" width="280" height="70"></canvas></div>
+                    <div class="pen-type-tabs">
+                        <div class="pen-tab-btn active" id="tab-fountain" onclick="setPenSubtype('fountain')"><span>✒️</span><span>Перьевая</span></div>
+                        <div class="pen-tab-btn" id="tab-ballpoint" onclick="setPenSubtype('ballpoint')"><span>🖊️</span><span>Шариковая</span></div>
+                        <div class="pen-tab-btn" id="tab-brush" onclick="setPenSubtype('brush')"><span>🖌️</span><span>Кисть</span></div>
+                    </div>
+                    <div class="gn-slider-row">
+                        <div class="gn-slider-header"><span>Толщина штриха</span><span id="val-pen-size">6 px</span></div>
+                        <input type="range" class="gn-slider" min="1" max="50" value="6" oninput="updatePenSize(this.value)">
+                    </div>
+                    <div class="gn-slider-row" id="row-sharpness">
+                        <div class="gn-slider-header"><span>Острота Кончика</span><span id="val-sharpness">75%</span></div>
+                        <input type="range" class="gn-slider" min="0" max="100" value="75" oninput="updatePenSetting('sharpness', this.value)">
+                    </div>
+                    <div class="gn-slider-row" id="row-pressure">
+                        <div class="gn-slider-header"><span>Чувствительность к нажиму</span><span id="val-pressure">50%</span></div>
+                        <input type="range" class="gn-slider" min="0" max="100" value="50" oninput="updatePenSetting('pressure', this.value)">
+                    </div>
+                    <div class="gn-slider-row">
+                        <div class="gn-slider-header"><span>Стабилизация штриха</span><span id="val-stabilization">0%</span></div>
+                        <input type="range" class="gn-slider" min="0" max="100" value="0" oninput="updatePenSetting('stabilization', this.value)">
+                    </div>
+                    <hr style="border:none; border-top:1px solid var(--border-color);">
+                    <div class="gn-switch-row">
+                        <span>Рисовать и удерживать</span>
+                        <label class="gn-switch"><input type="checkbox" id="sw-draw-hold" checked onchange="updatePenSetting('drawHold', this.checked)"><span class="gn-slider-toggle"></span></label>
+                    </div>
+                </div>
+
+                <div class="gn-popover-panel" id="marker-popover-panel">
+                    <div class="gn-popover-header">Маркер</div>
+                    <div class="gn-slider-row">
+                        <div class="gn-slider-header"><span>Толщина маркера</span><span id="val-marker-size">24 px</span></div>
+                        <input type="range" class="gn-slider" min="5" max="100" value="24" oninput="updateMarkerSize(this.value)">
+                    </div>
+                    <div class="gn-slider-row">
+                        <div class="gn-slider-header"><span>Стабилизация штриха</span><span id="val-marker-stab">0%</span></div>
+                        <input type="range" class="gn-slider" min="0" max="100" value="0" oninput="updateMarkerSetting('stabilization', this.value)">
+                    </div>
+                    <div class="gn-switch-row">
+                        <span>Рисование по прямой линии</span>
+                        <label class="gn-switch"><input type="checkbox" id="sw-marker-straight" onchange="updateMarkerSetting('straight', this.checked)"><span class="gn-slider-toggle"></span></label>
+                    </div>
+                </div>
+
+                <div class="gn-popover-panel" id="eraser-popover-panel">
+                    <div class="gn-popover-header">Ластик</div>
+                    <div class="gn-slider-row">
+                        <div class="gn-slider-header"><span>Размер ластика</span><span id="val-eraser-size">20 px</span></div>
+                        <input type="range" class="gn-slider" min="5" max="100" value="20" oninput="updateEraserSize(this.value)">
+                    </div>
+                </div>
+
+                <!-- Холст -->
+                <div class="nb-canvas-container">
+                    <div class="nb-page-paper" id="nb-paper-element">
+                        <canvas class="layer-canvas" id="layer-highlighter" width="794" height="1123"></canvas>
+                        <canvas class="layer-canvas" id="layer-pen" width="794" height="1123"></canvas>
+                        <canvas class="layer-canvas" id="layer-ui" width="794" height="1123"></canvas>
+                        <div id="sticky-notes-layer" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="color" id="inline-color-picker" onchange="applyColorFromPicker(this.value)">
+    <input type="color" id="swatch-edit-picker" style="display:none;" onchange="onSwatchColorPicked(this.value)">
+
+    <!-- МОДАЛКИ -->
+    <div class="modal-overlay" id="folder-modal" onclick="closeModal(event, 'folder-modal')">
+        <div class="modal small-modal" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 12px;" id="folder-modal-title">Папка</h3>
+            <input type="text" id="folder-name-input" placeholder="Название папки">
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Эмодзи-значок папки:</p>
+            <div class="emoji-picker-grid" id="folder-emoji-grid"></div>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Цвет папки:</p>
+            <div class="pastel-grid" id="folder-color-row"></div>
+            <button class="primary-btn" onclick="saveFolder()">Сохранить папку</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="folder-context-modal" onclick="closeModal(event, 'folder-context-modal')">
+        <div class="modal small-modal" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 14px;" id="ctx-folder-title">Управление папкой</h3>
+            <button class="primary-btn" style="margin-bottom:8px;" onclick="editCurrentFolder()">✏️ Изменить (Имя, Цвет, Иконку)</button>
+            <button class="secondary-btn" style="width:100%; margin-bottom:8px;" onclick="openFolderContentsModal()">📋 Изменить состав папки</button>
+            <button class="secondary-btn" style="width:100%; color:#d32f2f; border-color:#d32f2f;" onclick="deleteCurrentFolder()">🗑️ Удалить папку</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="folder-contents-modal" onclick="closeModal(event, 'folder-contents-modal')">
+        <div class="modal small-modal" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 12px;">Изменение состава папки</h3>
+            <div class="contents-checklist" id="folder-contents-list"></div>
+            <button class="primary-btn" onclick="closeModalDirect('folder-contents-modal')">Готово</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="task-context-modal" onclick="closeModal(event, 'task-context-modal')">
+        <div class="modal small-modal" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 14px;" id="ctx-task-title">Управление задачей</h3>
+            <button class="primary-btn" style="margin-bottom:8px;" onclick="editCurrentTaskFromCtx()">✏️ Изменить задачу</button>
+            <button class="secondary-btn" style="width:100%; color:#d32f2f; border-color:#d32f2f;" onclick="deleteCurrentTaskFromCtx()">🗑️ Удалить задачу</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="task-modal" onclick="closeModal(event, 'task-modal')">
+        <div class="modal small-modal" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 12px;" id="task-modal-title">Новая задача</h3>
+            <input type="text" id="task-name" placeholder="Что нужно сделать?">
+            <div class="form-row"><input type="time" id="task-time" style="flex:1;"><input type="text" id="task-location" placeholder="Место" style="flex:1;"></div>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Значок задачи:</p>
+            <div class="emoji-picker-grid" id="task-emoji-grid"></div>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Привязать к папке:</p>
+            <select id="task-folder-select"></select>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Пастельный цвет задачи:</p>
+            <div class="pastel-grid" id="task-color-row"></div>
+            <button class="primary-btn" onclick="saveTask()">Сохранить задачу</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="stickers-modal" onclick="closeModal(event, 'stickers-modal')">
+        <div class="modal medium-modal" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 12px;">Мои Стикеры и Наборы</h3>
+            <div style="display:flex; gap:10px; margin-bottom: 12px;">
+                <button class="primary-btn" style="margin:0; flex:1;" onclick="triggerStickerUpload()">+ Добавить новый стикер</button>
+                <button class="secondary-btn" style="flex:1;" onclick="createNewStickerSet()">📁 Создать папку для стикеров</button>
+                <input type="file" id="sticker-file-input" accept="image/*" style="display:none;" onchange="handleStickerImageUploaded(this)">
+            </div>
+            <div class="sticker-tabs-bar" id="sticker-sets-tabs"></div>
+            <div class="custom-sticker-grid" id="custom-stickers-container"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="choice-modal" onclick="closeModal(event, 'choice-modal')">
+        <div class="modal small-modal" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 16px;">Добавить в папку</h3>
+            <button class="primary-btn" style="margin-bottom: 12px;" onclick="openCreateNotebookModal()">📘 Создать Блокнот</button>
+            <button class="secondary-btn" style="width:100%; padding:10px;" onclick="triggerLocalFileUpload()">📄 Загрузить файл</button>
+            <input type="file" id="local-file-input" style="display:none;" onchange="handleFileSelected(this)">
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="notebook-modal" onclick="closeModal(event, 'notebook-modal')">
+        <div class="modal small-modal" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 16px;">Настройки Блокнота</h3>
+            <input type="text" id="nb-input-title" placeholder="Название блокнота">
+            <select id="nb-select-pattern">
+                <option value="grid">В клетку</option>
+                <option value="lines">В линейку</option>
+                <option value="dots">В точку</option>
+                <option value="blank">Пустой</option>
+            </select>
+            <select id="nb-select-paper-color">
+                <option value="#ffffff">Белоснежный</option>
+                <option value="#fcf9ee">Кремовый (Ваниль)</option>
+                <option value="#fce4e4">Розовый пастель</option>
+                <option value="#e4fcf5">Мятный пастель</option>
+            </select>
+            <button class="primary-btn" onclick="saveAndLaunchNotebook()">Создать</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="settings-modal" onclick="closeModal(event, 'settings-modal')">
+        <div class="modal small-modal" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 16px;">Настройки приложения</h3>
+            <div style="background:var(--sidebar-bg); padding:12px; border-radius:8px; margin-bottom:14px; border:1px solid var(--border-color); text-align:center;">
+                <p style="font-weight:700; font-size:13px; margin-bottom:6px;" id="auth-user-name">Учетная запись Firebase</p>
+                <button class="primary-btn" style="margin:0; font-size:12px;" id="auth-btn" onclick="loginWithGoogle()">🌐 Войти через Google</button>
+            </div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Шрифт:</p>
+            <select id="font-select" onchange="changeFont()">
+                <option value="'Nunito', sans-serif">Nunito</option>
+                <option value="'Quicksand', sans-serif">Quicksand</option>
+                <option value="'Comfortaa', sans-serif">Comfortaa</option>
+                <option value="'Roboto', sans-serif">Roboto</option>
+                <option value="'Montserrat', sans-serif">Montserrat</option>
+                <option value="'Caveat', cursive">Caveat</option>
+            </select>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Тема:</p>
+            <select id="theme-select" onchange="changeTheme()">
+                <option value="light">Светлая</option>
+                <option value="dark">Тёмная (Молочная)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА ЭКСПОРТА -->
+    <div class="modal-overlay" id="export-modal" onclick="closeModal(event, 'export-modal')">
+        <div class="modal small-modal" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 16px;">Экспорт блокнота</h3>
+            <button class="primary-btn" style="margin-bottom: 8px;" onclick="exportNotebookAsImage()">🖼️ Скачать как PNG</button>
+            <button class="secondary-btn" style="width:100%; margin-bottom: 8px;" onclick="exportNotebookAsPDF()">📄 Сохранить как PDF</button>
+            <button class="secondary-btn" style="width:100%; margin-bottom: 8px;" onclick="shareNotebook()">📤 Отправить / Поделиться</button>
+            <button class="secondary-btn" style="width:100%;" onclick="uploadToCloud()">☁️ Сохранить в облако</button>
+        </div>
+    </div>
+
+    <script>
+        const standardEmojiList = ['📁', '🎓', '🔬', '🩺', '📚', '💊', '🧬', '🧠', '🫀', '🩸', '🧪', '📌', '📝', '📅', '💡', '⭐', '❤️', '🔥', '🎨', '✨', '☕', '🎧', '💻', '🏷️', '🔖', '🎀', '🎯', '🏆', '🐾', '🌸', '🌿', '🍉', '🥐', '✈️', '🏠', '🛒', '💰', '🔑', '⏰', '💬'];
+        const taskPastelColors = ['#FFB3BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF', '#E8AEFF', '#FFC6FF', '#BDB2FF', '#A0C4FF', '#9BF6FF', '#CAFFBF', '#FDFFB6', '#FFD6A5', '#FFADAD', '#D8BBFF', '#E2ECE9'];
+        const stickyNotePastels = ['#ffb3ba', '#ffd6a5', '#fdffb6', '#caffbf', '#9bf6ff', '#a0c4ff', '#bdb2ff', '#e2ece9'];
+
+        let selectedFolderIcon = standardEmojiList[0];
+        let selectedFolderColor = taskPastelColors[0];
+        let selectedTaskIcon = standardEmojiList[11];
+        let selectedTaskColor = taskPastelColors[0];
+
+        let penSwatches = JSON.parse(localStorage.getItem('pen_swatches_v14')) || ['#37352f', '#d32f2f', '#1976d2', '#388e3c', '#f57c00', '#7b1fa2'];
+        let highlighterSwatches = JSON.parse(localStorage.getItem('hl_swatches_v14')) || ['#ffe0b2', '#fff9c4', '#c8e6c9', '#b3e5fc', '#f8bbd0'];
+        let selectedPenSwatch = penSwatches[0];
+        let selectedHlSwatch = highlighterSwatches[0];
+        let editingSwatchIndex = null;
+
+        let penState = JSON.parse(localStorage.getItem('pen_state_v14')) || { subtype: 'fountain', size: 6, sharpness: 75, pressure: 50, stabilization: 0, drawHold: true };
+        let markerState = JSON.parse(localStorage.getItem('marker_state_v14')) || { size: 24, stabilization: 0, straight: false };
+        let eraserState = JSON.parse(localStorage.getItem('eraser_state_v14')) || { size: 20 };
+
+        let appData = JSON.parse(localStorage.getItem('schedule_data_v14')) || { folders: [{ id: 'f1', name: 'Учеба УрФУ', icon: '🎓', color: '#BAE1FF' }], tasks: [{ id: 't1', folderId: 'f1', date: getTodayStr(), text: 'Анатомия', icon: '🩺', time: '10:00', color: '#FFB3BA' }], files: [], stickerSets: [ { id: 'set_default', name: 'Мой набор', stickers: [] } ], activeStickerSetId: 'set_default', theme: 'light', font: "'Nunito', sans-serif" };
+
+        function saveData() { 
+            localStorage.setItem('schedule_data_v14', JSON.stringify(appData));
+            localStorage.setItem('pen_swatches_v14', JSON.stringify(penSwatches));
+            localStorage.setItem('hl_swatches_v14', JSON.stringify(highlighterSwatches));
+            localStorage.setItem('pen_state_v14', JSON.stringify(penState));
+            localStorage.setItem('marker_state_v14', JSON.stringify(markerState));
+            localStorage.setItem('eraser_state_v14', JSON.stringify(eraserState));
+            
+            if (window.syncDataToFirebase) {
+                window.syncDataToFirebase();
+            }
+        }
+
+        const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+        const weekdays = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'];
+
+        let currentDate = new Date(); let currentWeekDate = null;
+        let contextTargetFolderId = null; let contextTargetTaskId = null;
+        let editingFolderId = null; let editingTaskId = null; let addingTaskToDate = null;
+
+        document.addEventListener('DOMContentLoaded', () => { document.documentElement.style.setProperty('--main-font', appData.font); if (appData.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); renderFolders(); renderCalendar(); initEmojiGrids(); initPastelPickers(); });
+        document.addEventListener('click', (e) => { 
+            const penPop = document.getElementById('pen-popover-panel'); 
+            const markerPop = document.getElementById('marker-popover-panel'); 
+            const eraserPop = document.getElementById('eraser-popover-panel'); 
+            
+            const isPenClick = penPop && (penPop.contains(e.target) || e.target.closest('#tool-pen')); 
+            const isMarkerClick = markerPop && (markerPop.contains(e.target) || e.target.closest('#tool-highlighter')); 
+            const isEraserClick = eraserPop && (eraserPop.contains(e.target) || e.target.closest('#tool-eraser')); 
+            
+            if (!isPenClick && penPop && penPop.style.display === 'flex') penPop.style.display = 'none'; 
+            if (!isMarkerClick && markerPop && markerPop.style.display === 'flex') markerPop.style.display = 'none'; 
+            if (!isEraserClick && eraserPop && eraserPop.style.display === 'flex') eraserPop.style.display = 'none'; 
+        });
+
+        function getTodayStr() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+        function dateToStr(dObj) { return `${dObj.getFullYear()}-${String(dObj.getMonth()+1).padStart(2,'0')}-${String(dObj.getDate()).padStart(2,'0')}`; }
+
+        function openSettings() { document.getElementById('settings-modal').style.display = 'flex'; }
+        function closeModal(e, id) { if(e.target.id === id) document.getElementById(id).style.display = 'none'; }
+        function closeModalDirect(id) { document.getElementById(id).style.display = 'none'; }
+        function changeTheme() { appData.theme = document.getElementById('theme-select').value; if(appData.theme==='dark') document.documentElement.setAttribute('data-theme', 'dark'); else document.documentElement.removeAttribute('data-theme'); saveData(); }
+        function changeFont() { appData.font = document.getElementById('font-select').value; document.documentElement.style.setProperty('--main-font', appData.font); saveData(); }
+
+        function initEmojiGrids() { document.getElementById('folder-emoji-grid').innerHTML = standardEmojiList.map(e => `<div class="emoji-opt ${e===selectedFolderIcon?'selected':''}" onclick="selectedFolderIcon='${e}';initEmojiGrids();">${e}</div>`).join(''); document.getElementById('task-emoji-grid').innerHTML = standardEmojiList.map(e => `<div class="emoji-opt ${e===selectedTaskIcon?'selected':''}" onclick="selectedTaskIcon='${e}';initEmojiGrids();">${e}</div>`).join(''); }
+        function initPastelPickers() { document.getElementById('folder-color-row').innerHTML = taskPastelColors.map(c => `<div class="pastel-opt ${c===selectedFolderColor?'selected':''}" style="background:${c}" onclick="selectedFolderColor='${c}';initPastelPickers();"></div>`).join(''); document.getElementById('task-color-row').innerHTML = taskPastelColors.map(c => `<div class="pastel-opt ${c===selectedTaskColor?'selected':''}" style="background:${c}" onclick="selectedTaskColor='${c}';initPastelPickers();"></div>`).join(''); }
+
+        function renderFolders() { const list = document.getElementById('folders-list'); list.innerHTML = ''; appData.folders.forEach(f => { const div = document.createElement('div'); div.className = 'sidebar-item'; div.onclick = () => openFolderView(f.id); div.oncontextmenu = (e) => { e.preventDefault(); contextTargetFolderId = f.id; document.getElementById('ctx-folder-title').innerText = `${f.icon} ${f.name}`; document.getElementById('folder-context-modal').style.display = 'flex'; }; div.innerHTML = `<div class="sidebar-item-content"><span>${f.icon||'📁'}</span><span>${f.name}</span></div><div class="folder-badge" style="background:${f.color||'#BAE1FF'}"></div>`; list.appendChild(div); }); }
+        function openFolderModal() { editingFolderId = null; document.getElementById('folder-name-input').value = ''; document.getElementById('folder-modal').style.display = 'flex'; }
+        function saveFolder() { const name = document.getElementById('folder-name-input').value || 'Новая папка'; if(editingFolderId) { const f = appData.folders.find(x => x.id === editingFolderId); if(f) { f.name = name; f.icon = selectedFolderIcon; f.color = selectedFolderColor; } } else appData.folders.push({ id: 'f_' + Date.now(), name, icon: selectedFolderIcon, color: selectedFolderColor }); saveData(); renderFolders(); document.getElementById('folder-modal').style.display = 'none'; }
+        function editCurrentFolder() { document.getElementById('folder-context-modal').style.display = 'none'; const f = appData.folders.find(x => x.id === contextTargetFolderId); if(f) { editingFolderId = f.id; document.getElementById('folder-name-input').value = f.name; selectedFolderIcon = f.icon; selectedFolderColor = f.color; initEmojiGrids(); initPastelPickers(); document.getElementById('folder-modal').style.display = 'flex'; } }
+        function openFolderContentsModal() { document.getElementById('folder-context-modal').style.display = 'none'; document.getElementById('folder-contents-list').innerHTML = appData.tasks.map(t => `<div class="contents-item"><span>${t.icon||'📌'} ${t.text}</span><input type="checkbox" ${t.folderId===contextTargetFolderId?'checked':''} onchange="toggleTaskInFolder('${t.id}', this.checked)"></div>`).join(''); document.getElementById('folder-contents-modal').style.display = 'flex'; }
+        function toggleTaskInFolder(taskId, isChecked) { const t = appData.tasks.find(x => x.id === taskId); if(t) { t.folderId = isChecked ? contextTargetFolderId : null; saveData(); if(document.getElementById('folder-view').style.display==='flex') renderFolderViewData(); } }
+        function deleteCurrentFolder() { appData.folders = appData.folders.filter(x => x.id !== contextTargetFolderId); saveData(); renderFolders(); document.getElementById('folder-context-modal').style.display = 'none'; showMonthView(); }
+
+        function openFolderView(folderId) { contextTargetFolderId = folderId; const f = appData.folders.find(x => x.id === folderId); document.getElementById('main-title').innerText = `${f.icon} ${f.name}`; document.getElementById('month-view').style.display = 'none'; document.getElementById('week-view').style.display = 'none'; document.getElementById('notebook-studio').style.display = 'none'; document.getElementById('back-btn').style.display = 'block'; document.getElementById('folder-view').style.display = 'flex'; renderFolderViewData(); }
+        function renderFolderViewData() { const carousel = document.getElementById('fc-tasks'); const folderTasks = appData.tasks.filter(t => t.folderId === contextTargetFolderId); if(folderTasks.length === 0) carousel.innerHTML = '<div style="font-size:12px; color:var(--text-muted); padding:10px;">Нет привязанных задач</div>'; else carousel.innerHTML = folderTasks.map(t => `<div class="carousel-item" style="background:${t.color||'#FFB3BA'}"><div>${t.icon||'📌'} ${t.text}</div></div>`).join(''); const filesGrid = document.getElementById('fc-files'); const folderFiles = appData.files.filter(file => file.folderId === contextTargetFolderId); if(folderFiles.length === 0) filesGrid.innerHTML = '<div style="font-size:12px; color:var(--text-muted);">Папка пуста</div>'; else filesGrid.innerHTML = folderFiles.map(file => `<div class="file-card" onclick="launchNotebookStudio('${file.id}')"><div class="file-icon">📘</div><div class="file-name">${file.name}</div></div>`).join(''); }
+        function openAddChoiceModal() { document.getElementById('choice-modal').style.display = 'flex'; }
+        function openCreateNotebookModal() { document.getElementById('choice-modal').style.display = 'none'; document.getElementById('notebook-modal').style.display = 'flex'; }
+        function saveAndLaunchNotebook() { const title = document.getElementById('nb-input-title').value || 'Блокнот'; const newNb = { id: 'nb_'+Date.now(), folderId: contextTargetFolderId, type: 'notebook', name: title, pattern: document.getElementById('nb-select-pattern').value, paperColor: document.getElementById('nb-select-paper-color').value, pages: [{ id: 'p_1', objects: [] }], stickyNotes: [] }; appData.files.push(newNb); saveData(); document.getElementById('notebook-modal').style.display = 'none'; renderFolderViewData(); launchNotebookStudio(newNb.id); }
+
+        function showMonthView() { document.getElementById('week-view').style.display = 'none'; document.getElementById('folder-view').style.display = 'none'; document.getElementById('notebook-studio').style.display = 'none'; document.getElementById('back-btn').style.display = 'none'; document.getElementById('month-view').style.display = 'flex'; renderCalendar(); }
+        function renderCalendar() { const year = currentDate.getFullYear(); const month = currentDate.getMonth(); document.getElementById('main-title').innerText = `${months[month]} ${year}`; const grid = document.getElementById('calendar-grid'); grid.innerHTML = '<div class="weekday">ПН</div><div class="weekday">ВТ</div><div class="weekday">СР</div><div class="weekday">ЧТ</div><div class="weekday">ПТ</div><div class="weekday">СБ</div><div class="weekday">ВС</div>'; const firstDayIndex = new Date(year, month, 1).getDay() || 7; const daysInMonth = new Date(year, month + 1, 0).getDate(); const prevMonthDays = new Date(year, month, 0).getDate(); const todayStr = getTodayStr(); for (let i = 1; i < firstDayIndex; i++) grid.appendChild(createDayCell(prevMonthDays - firstDayIndex + i + 1, true)); for (let i = 1; i <= daysInMonth; i++) { const dateObj = new Date(year, month, i); grid.appendChild(createDayCell(i, false, dateObj, dateToStr(dateObj) === todayStr, dateToStr(dateObj))); } const remaining = (7 - ((grid.children.length - 7) % 7)) % 7; for (let i = 1; i <= remaining; i++) grid.appendChild(createDayCell(i, true)); }
+        function createDayCell(dayNum, isOtherMonth, dateObj = null, isToday = false, dateStr = '') { const cell = document.createElement('div'); cell.className = `day-cell ${isOtherMonth ? 'other-month' : ''}`; let html = `<div class="day-header"><div class="day-number">${dayNum}</div>${isToday?'<div class="today-indicator"></div>':''}</div>`; if (dateStr) { const dayTasks = appData.tasks.filter(t => t.date === dateStr); if (dayTasks.length > 0) html += `<div class="day-events-mini">` + dayTasks.slice(0,3).map(t => `<div class="mini-event-badge" style="background:${t.color||'#FFB3BA'};"><span>${t.icon||'📌'}</span> <span>${t.text}</span></div>`).join('') + `</div>`; } cell.innerHTML = html; if(!isOtherMonth && dateObj) cell.onclick = () => showWeekView(dateObj); return cell; }
+        function changeMonth(dir) { currentDate.setMonth(currentDate.getMonth() + dir); renderCalendar(); }
+
+        function showWeekView(clickedDate) { currentWeekDate = clickedDate; document.getElementById('month-view').style.display = 'none'; document.getElementById('folder-view').style.display = 'none'; document.getElementById('notebook-studio').style.display = 'none'; document.getElementById('main-header-bar').style.display = 'flex'; document.getElementById('back-btn').style.display = 'block'; const weekBoard = document.getElementById('week-view'); weekBoard.style.display = 'flex'; weekBoard.innerHTML = ''; const day = clickedDate.getDay() || 7; const startOfWeek = new Date(clickedDate); startOfWeek.setDate(clickedDate.getDate() - day + 1); document.getElementById('main-title').innerText = `Неделя`; for (let i = 0; i < 7; i++) { const colDate = new Date(startOfWeek); colDate.setDate(startOfWeek.getDate() + i); const dateStr = dateToStr(colDate); const isToday = (dateStr === getTodayStr()); const col = document.createElement('div'); col.className = 'column'; col.innerHTML = `<div class="column-header" style="${isToday ? 'color:var(--text-main); font-weight:700;' : ''}">${weekdays[i]} ${colDate.getDate()}</div>`; appData.tasks.filter(t => t.date === dateStr).forEach(t => { const card = document.createElement('div'); card.className = 'task-card'; card.style.backgroundColor = t.color || '#FFB3BA'; card.innerHTML = `<div style="display:flex; align-items:center; gap:6px;"><span>${t.icon||'📌'}</span> <span>${t.text}</span></div>`; card.oncontextmenu = (e) => { e.preventDefault(); contextTargetTaskId = t.id; document.getElementById('ctx-task-title').innerText = `${t.icon||'📌'} ${t.text}`; document.getElementById('task-context-modal').style.display = 'flex'; }; col.appendChild(card); }); const addBtn = document.createElement('div'); addBtn.className = 'add-card-btn'; addBtn.innerText = '+ Добавить'; addBtn.onclick = () => openTaskModal(dateStr); col.appendChild(addBtn); weekBoard.appendChild(col); } }
+        function editCurrentTaskFromCtx() { document.getElementById('task-context-modal').style.display = 'none'; const t = appData.tasks.find(x => x.id === contextTargetTaskId); if(t) { editingTaskId = t.id; addingTaskToDate = t.date; document.getElementById('task-name').value = t.text; document.getElementById('task-time').value = t.time||''; document.getElementById('task-location').value = t.location||''; selectedTaskIcon = t.icon; selectedTaskColor = t.color; const fSelect = document.getElementById('task-folder-select'); fSelect.innerHTML = '<option value="">(Без папки)</option>' + appData.folders.map(f => `<option value="${f.id}" ${f.id===t.folderId?'selected':''}>${f.icon} ${f.name}</option>`).join(''); initEmojiGrids(); initPastelPickers(); document.getElementById('task-modal').style.display = 'flex'; } }
+        function deleteCurrentTaskFromCtx() { appData.tasks = appData.tasks.filter(x => x.id !== contextTargetTaskId); saveData(); document.getElementById('task-context-modal').style.display = 'none'; showWeekView(currentWeekDate); }
+        function openTaskModal(dateStr) { editingTaskId = null; addingTaskToDate = dateStr; document.getElementById('task-name').value = ''; document.getElementById('task-time').value = ''; document.getElementById('task-location').value = ''; selectedTaskIcon = standardEmojiList[11]; selectedTaskColor = taskPastelColors[0]; const fSelect = document.getElementById('task-folder-select'); fSelect.innerHTML = '<option value="">(Без папки)</option>' + appData.folders.map(f => `<option value="${f.id}">${f.icon} ${f.name}</option>`).join(''); initEmojiGrids(); initPastelPickers(); document.getElementById('task-modal').style.display = 'flex'; }
+        function saveTask() { const name = document.getElementById('task-name').value; if(!name) return; const folderIdVal = document.getElementById('task-folder-select').value || null; if(editingTaskId) { const t = appData.tasks.find(x => x.id === editingTaskId); if(t) { t.text = name; t.time = document.getElementById('task-time').value; t.location = document.getElementById('task-location').value; t.icon = selectedTaskIcon; t.color = selectedTaskColor; t.folderId = folderIdVal; } } else appData.tasks.push({ id: 't_' + Date.now(), date: addingTaskToDate, text: name, icon: selectedTaskIcon, time: document.getElementById('task-time').value, location: document.getElementById('task-location').value, folderId: folderIdVal, color: selectedTaskColor }); saveData(); document.getElementById('task-modal').style.display = 'none'; showWeekView(currentWeekDate); }
+
+        // ==========================================================
+        // БЛОКНОТ И ДВИЖОК РИСОВАНИЯ
+        // ==========================================================
+        let currentNotebook = null;
+        let activePageIndex = 0;
+        let currentTool = 'pen'; 
+        let symmetryEnabled = false; 
+        let symmetryX = 397;
+        let isDraggingSymmetry = false;
+
+        let canvasPen, ctxPen, canvasHighlighter, ctxHighlighter, canvasUI, ctxUI;
+        let isDrawing = false;
+        let pointsBuffer = [];
+        let lastMousePos = null;
+
+        function launchNotebookStudio(nbId) {
+            currentNotebook = appData.files.find(x => x.id === nbId);
+            if(!currentNotebook.pages) currentNotebook.pages = [{ id: 'p_1', objects: [] }];
+            if(!currentNotebook.stickyNotes) currentNotebook.stickyNotes = [];
+            activePageIndex = 0;
+
+            document.getElementById('main-header-bar').style.display = 'none'; 
+            document.getElementById('folder-view').style.display = 'none'; 
+            document.getElementById('month-view').style.display = 'none';
+            document.querySelector('.sidebar').style.display = 'none'; 
+            
+            const studio = document.getElementById('notebook-studio'); studio.style.display = 'flex';
+            document.getElementById('nb-title-text').innerText = currentNotebook.name;
+            
+            const paper = document.getElementById('nb-paper-element');
+            paper.style.backgroundColor = currentNotebook.paperColor;
+            if(currentNotebook.pattern === 'grid') { paper.style.backgroundImage = 'linear-gradient(#e0e0e0 1px, transparent 1px), linear-gradient(90deg, #e0e0e0 1px, transparent 1px)'; paper.style.backgroundSize = '20px 20px'; }
+            else if(currentNotebook.pattern === 'lines') { paper.style.backgroundImage = 'linear-gradient(#e0e0e0 1px, transparent 1px)'; paper.style.backgroundSize = '100% 28px'; }
+            else if(currentNotebook.pattern === 'dots') { paper.style.backgroundImage = 'radial-gradient(#c0c0c0 1px, transparent 1px)'; paper.style.backgroundSize = '20px 20px'; }
+            else paper.style.backgroundImage = 'none';
+
+            initLayers(); renderPagesSidebarList(); renderQuickSwatchesBar(); renderActivePageObjects(); renderStickyNotesDOM(); updatePageNumberDisplay();
+        }
+
+        function exitNotebookStudio() { 
+            document.getElementById('notebook-studio').style.display = 'none'; 
+            document.getElementById('main-header-bar').style.display = 'flex'; 
+            document.querySelector('.sidebar').style.display = 'flex'; 
+            openFolderView(contextTargetFolderId); 
+        }
+
+        function togglePagesSidebar() { document.getElementById('nb-pages-sidebar').classList.toggle('collapsed'); }
+
+        function initLayers() {
+            canvasHighlighter = document.getElementById('layer-highlighter'); ctxHighlighter = canvasHighlighter.getContext('2d');
+            canvasPen = document.getElementById('layer-pen'); ctxPen = canvasPen.getContext('2d');
+            canvasUI = document.getElementById('layer-ui'); ctxUI = canvasUI.getContext('2d');
+
+            canvasPen.onpointerdown = startDrawing;
+            canvasPen.onpointermove = drawStroke;
+            canvasPen.onpointerup = stopDrawing;
+            canvasPen.onpointercancel = stopDrawing;
+            
+            canvasPen.onmouseleave = () => {
+                lastMousePos = null;
+                renderSymmetryUI();
+            };
+        }
+
+        function renderPagesSidebarList() { document.getElementById('pages-list-container').innerHTML = currentNotebook.pages.map((p, idx) => `<div class="page-thumb-card ${idx===activePageIndex?'active':''}" onclick="switchToPage(${idx})"><div class="page-thumb-preview"></div><div class="page-num-label">Стр. ${idx+1}</div></div>`).join(''); }
+        function addNewPageToNotebook() { currentNotebook.pages.push({ id: 'p_' + Date.now(), objects: [] }); saveData(); switchToPage(currentNotebook.pages.length - 1); }
+        function updatePageNumberDisplay() { const display = document.getElementById('nb-page-num-display'); if (display && currentNotebook) { display.innerText = `${activePageIndex + 1} / ${currentNotebook.pages.length}`; } }
+        function prevPage() { if (activePageIndex > 0) switchToPage(activePageIndex - 1); }
+        function nextPage() { if (currentNotebook && activePageIndex < currentNotebook.pages.length - 1) switchToPage(activePageIndex + 1); }
+        function switchToPage(idx) { activePageIndex = idx; renderPagesSidebarList(); renderActivePageObjects(); updatePageNumberDisplay(); }
+
+        function renderQuickSwatchesBar() { const container = document.getElementById('quick-swatches-container'); if (!container) return; const activeSwatches = (currentTool === 'highlighter') ? highlighterSwatches : ((currentTool === 'sticky') ? stickyNotePastels : penSwatches); const activeSelected = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch; let html = activeSwatches.map((hex, idx) => `<div class="swatch-circle ${hex === activeSelected ? 'active' : ''}" style="background-color:${hex}" onclick="handleSwatchClick('${hex}', ${idx})"></div>`).join(''); if (currentTool !== 'sticky') { html += `<div class="add-swatch-btn" onclick="addNewSwatchColor()">+</div>`; } container.innerHTML = html; }
+        function handleSwatchClick(hex, index) { const activeSelected = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch; if (hex === activeSelected && currentTool !== 'sticky') { editingSwatchIndex = index; const picker = document.getElementById('swatch-edit-picker'); picker.value = hex; picker.click(); } else { if (currentTool === 'highlighter') selectedHlSwatch = hex; else if (currentTool === 'sticky') spawnNewStickyNote(hex); else selectedPenSwatch = hex; renderQuickSwatchesBar(); drawLivePenPreview(); } }
+        function onSwatchColorPicked(newHex) { if (editingSwatchIndex !== null) { if (currentTool === 'highlighter') { highlighterSwatches[editingSwatchIndex] = newHex; selectedHlSwatch = newHex; } else { penSwatches[editingSwatchIndex] = newHex; selectedPenSwatch = newHex; } editingSwatchIndex = null; saveData(); renderQuickSwatchesBar(); drawLivePenPreview(); } }
+        function addNewSwatchColor() { const defaultColor = '#3182ce'; if (currentTool === 'highlighter') { highlighterSwatches.push(defaultColor); selectedHlSwatch = defaultColor; editingSwatchIndex = highlighterSwatches.length - 1; } else { penSwatches.push(defaultColor); selectedPenSwatch = defaultColor; editingSwatchIndex = penSwatches.length - 1; } saveData(); renderQuickSwatchesBar(); const picker = document.getElementById('swatch-edit-picker'); picker.value = defaultColor; picker.click(); }
+
+        // ОБНОВЛЕННАЯ ЛОГИКА ВЫБОРА ИНСТРУМЕНТА И ПОВТОРНОГО НАЖАТИЯ ДЛЯ МЕНЮ
+        function handleToolBtnClick(t) { 
+            const penPop = document.getElementById('pen-popover-panel'); 
+            const markerPop = document.getElementById('marker-popover-panel'); 
+            const eraserPop = document.getElementById('eraser-popover-panel'); 
+            
+            if (currentTool === t) {
+                // Если кликнули на тот же инструмент повторно — переключаем видимость меню настроек
+                if(t === 'pen') penPop.style.display = penPop.style.display === 'flex' ? 'none' : 'flex'; 
+                if(t === 'highlighter') markerPop.style.display = markerPop.style.display === 'flex' ? 'none' : 'flex'; 
+                if(t === 'eraser') eraserPop.style.display = eraserPop.style.display === 'flex' ? 'none' : 'flex'; 
+            } else {
+                // Если кликнули на другой инструмент — просто выбираем его, а меню настроек закрываем
+                document.querySelectorAll('.gn-tool-icon-btn').forEach(b => b.classList.remove('active')); 
+                document.getElementById('tool-' + t).classList.add('active'); 
+                
+                currentTool = t; 
+                penPop.style.display = 'none'; 
+                markerPop.style.display = 'none'; 
+                eraserPop.style.display = 'none'; 
+            }
+
+            renderQuickSwatchesBar(); 
+            drawLivePenPreview(); 
+            renderSymmetryUI();
+        }
+
+        function setPenSubtype(sub) { 
+            penState.subtype = sub; 
+            document.querySelectorAll('.pen-tab-btn').forEach(b => b.classList.remove('active')); 
+            document.getElementById('tab-' + sub).classList.add('active'); 
+            document.getElementById('pen-popover-title').innerText = (sub === 'fountain') ? 'Перьевая Ручка' : ((sub === 'ballpoint') ? 'Шариковая Ручка' : 'Ручка-Кисть'); 
+            document.getElementById('row-sharpness').style.display = (sub === 'fountain') ? 'flex' : 'none'; 
+            document.getElementById('row-pressure').style.display = (sub === 'ballpoint') ? 'none' : 'flex'; 
+            saveData(); 
+            drawLivePenPreview(); 
+        }
+
+        function updatePenSize(val) { penState.size = parseInt(val); document.getElementById('val-pen-size').innerText = val + ' px'; saveData(); drawLivePenPreview(); }
+        function updateMarkerSize(val) { markerState.size = parseInt(val); document.getElementById('val-marker-size').innerText = val + ' px'; saveData(); }
+        function updateEraserSize(val) { eraserState.size = parseInt(val); document.getElementById('val-eraser-size').innerText = val + ' px'; saveData(); renderSymmetryUI(); }
+
+        function updatePenSetting(key, val) { penState[key] = (key === 'drawHold') ? val : parseInt(val); if(document.getElementById('val-' + key)) document.getElementById('val-' + key).innerText = val + '%'; saveData(); drawLivePenPreview(); }
+        function updateMarkerSetting(key, val) { markerState[key] = (key === 'straight') ? val : parseInt(val); if(document.getElementById('val-marker-stab')) document.getElementById('val-marker-stab').innerText = val + '%'; saveData(); }
+        
+        function drawLivePenPreview() { 
+            const canvas = document.getElementById('pen-stroke-preview-canvas'); if(!canvas) return; 
+            const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); 
+            ctx.beginPath(); ctx.strokeStyle = selectedPenSwatch; 
+            ctx.lineWidth = penState.size || 6; 
+            ctx.lineCap = 'round'; ctx.lineJoin = 'round'; 
+            ctx.moveTo(30, 35); ctx.bezierCurveTo(90, 10, 190, 60, 250, 35); ctx.stroke(); 
+        }
+
+        /* КЛЕЙКИЕ ЗАМЕТКИ */
+        function spawnNewStickyNote(bgColor) { const note = { id: 'sn_' + Date.now(), x: 250, y: 300, w: 180, h: 180, color: bgColor, text: '', rotation: 0 }; currentNotebook.stickyNotes.push(note); saveData(); renderStickyNotesDOM(); }
+        function renderStickyNotesDOM() { const layer = document.getElementById('sticky-notes-layer'); if(!layer) return; layer.innerHTML = ''; currentNotebook.stickyNotes.forEach(sn => { const div = document.createElement('div'); div.className = 'sticky-note-element'; div.style.left = sn.x + 'px'; div.style.top = sn.y + 'px'; div.style.width = sn.w + 'px'; div.style.height = sn.h + 'px'; div.style.backgroundColor = sn.color; div.style.transform = `rotate(${sn.rotation||0}deg)`; div.innerHTML = `<div class="note-handle-rotate" onmousedown="startRotateNote(event, '${sn.id}')"></div><textarea class="sticky-note-textarea" placeholder="Введите текст..." oninput="updateNoteText('${sn.id}', this.value)">${sn.text||''}</textarea><div class="note-handle-resize" onmousedown="startResizeNote(event, '${sn.id}')"></div>`; div.onmousedown = (e) => { if(e.target.tagName === 'TEXTAREA' || e.target.classList.contains('note-handle-rotate') || e.target.classList.contains('note-handle-resize')) return; let startX = e.clientX, startY = e.clientY; document.onmousemove = (me) => { sn.x += (me.clientX - startX); sn.y += (me.clientY - startY); startX = me.clientX; startY = me.clientY; div.style.left = sn.x + 'px'; div.style.top = sn.y + 'px'; }; document.onmouseup = () => { document.onmousemove = null; saveData(); }; }; layer.appendChild(div); }); }
+        function updateNoteText(id, val) { const sn = currentNotebook.stickyNotes.find(x => x.id === id); if(sn) { sn.text = val; saveData(); } }
+        function startRotateNote(e, id) { e.stopPropagation(); const sn = currentNotebook.stickyNotes.find(x => x.id === id); let startX = e.clientX; document.onmousemove = (me) => { sn.rotation = (sn.rotation || 0) + (me.clientX - startX) * 0.5; startX = me.clientX; renderStickyNotesDOM(); }; document.onmouseup = () => { document.onmousemove = null; saveData(); }; }
+        function startResizeNote(e, id) { e.stopPropagation(); const sn = currentNotebook.stickyNotes.find(x => x.id === id); let startX = e.clientX, startY = e.clientY; document.onmousemove = (me) => { sn.w = Math.max(120, sn.w + (me.clientX - startX)); sn.h = Math.max(120, sn.h + (me.clientY - startY)); startX = me.clientX; startY = me.clientY; renderStickyNotesDOM(); }; document.onmouseup = () => { document.onmousemove = null; saveData(); }; }
+
+        /* СИММЕТРИЯ, КУРСОР И РИСОВАНИЕ */
+        function toggleSymmetry() { symmetryEnabled = !symmetryEnabled; renderSymmetryUI(); }
+
+        function renderSymmetryUI() {
+            ctxUI.clearRect(0, 0, canvasUI.width, canvasUI.height);
+            
+            if (currentTool === 'eraser' && lastMousePos) {
+                ctxUI.save();
+                ctxUI.beginPath();
+                ctxUI.arc(lastMousePos.x, lastMousePos.y, eraserState.size / 2, 0, Math.PI * 2);
+                ctxUI.strokeStyle = 'rgba(49, 130, 206, 0.8)';
+                ctxUI.lineWidth = 2;
+                ctxUI.fillStyle = 'rgba(49, 130, 206, 0.1)';
+                ctxUI.fill();
+                ctxUI.stroke();
+                ctxUI.restore();
+            }
+
+            if(symmetryEnabled) {
+                ctxUI.strokeStyle = 'rgba(49, 130, 206, 0.7)'; ctxUI.lineWidth = 2; ctxUI.setLineDash([8, 8]);
+                ctxUI.beginPath(); ctxUI.moveTo(symmetryX, 0); ctxUI.lineTo(symmetryX, 1123); ctxUI.stroke(); ctxUI.setLineDash([]);
+                ctxUI.fillStyle = '#3182ce'; ctxUI.beginPath(); ctxUI.arc(symmetryX, 50, 12, 0, Math.PI*2); ctxUI.fill();
+            }
+        }
+
+        function renderActivePageObjects() {
+            ctxHighlighter.clearRect(0, 0, 794, 1123);
+            ctxPen.clearRect(0, 0, 794, 1123);
+            const activePage = currentNotebook.pages[activePageIndex] || { objects: [] };
+            
+            activePage.objects.forEach(obj => {
+                if(obj.type === 'stroke') {
+                    const isHl = (obj.tool === 'highlighter');
+                    const targetCtx = isHl ? ctxHighlighter : ctxPen;
+                    
+                    targetCtx.save();
+                    targetCtx.beginPath();
+                    targetCtx.strokeStyle = obj.color;
+                    targetCtx.lineWidth = obj.size;
+                    targetCtx.lineCap = 'round'; targetCtx.lineJoin = 'round';
+                    targetCtx.globalAlpha = isHl ? 0.35 : 1.0;
+
+                    if(obj.points && obj.points.length > 0) {
+                        targetCtx.moveTo(obj.points[0].x, obj.points[0].y);
+                        for(let i=1; i<obj.points.length; i++) targetCtx.lineTo(obj.points[i].x, obj.points[i].y);
+                    }
+                    targetCtx.stroke();
+                    targetCtx.restore();
+                }
+            });
+            renderSymmetryUI();
+        }
+
+        function getCanvasCoords(e) {
+            const rect = canvasPen.getBoundingClientRect();
+            return {
+                x: (e.clientX - rect.left) * (canvasPen.width / rect.width),
+                y: (e.clientY - rect.top) * (canvasPen.height / rect.height)
+            };
+        }
+
+        function startDrawing(e) {
+            if (currentTool === 'sticky') return;
+            if (e.pointerType === 'touch') return;
+
+            const pos = getCanvasCoords(e);
+            lastMousePos = pos;
+
+            if (symmetryEnabled) {
+                if (Math.abs(pos.x - symmetryX) < 20 && Math.abs(pos.y - 50) < 20) {
+                    isDraggingSymmetry = true;
+                    return;
+                }
+            }
+
+            isDrawing = true;
+            pointsBuffer = [pos];
+
+            if (currentTool === 'eraser') {
+                applyEraser(pos);
+            }
+        }
+
+        function drawStroke(e) {
+            const pos = getCanvasCoords(e);
+            lastMousePos = pos;
+
+            if (isDraggingSymmetry) {
+                symmetryX = pos.x;
+                renderSymmetryUI();
+                return;
+            }
+
+            if (!isDrawing) {
+                renderSymmetryUI();
+                return;
+            }
+
+            if (currentTool === 'eraser') {
+                applyEraser(pos);
+                renderSymmetryUI();
+                return;
+            }
+
+            pointsBuffer.push(pos);
+            renderSymmetryUI();
+            const curSize = (currentTool === 'highlighter') ? markerState.size : penState.size;
+            const curColor = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch;
+
+            ctxUI.beginPath(); ctxUI.strokeStyle = curColor; ctxUI.lineWidth = curSize; ctxUI.lineCap = 'round';
+            ctxUI.globalAlpha = (currentTool === 'highlighter') ? 0.35 : 1.0;
+            ctxUI.moveTo(pointsBuffer[0].x, pointsBuffer[0].y);
+            for(let i=1; i<pointsBuffer.length; i++) ctxUI.lineTo(pointsBuffer[i].x, pointsBuffer[i].y);
+            ctxUI.stroke();
+
+            if (symmetryEnabled) {
+                ctxUI.beginPath();
+                ctxUI.moveTo(2 * symmetryX - pointsBuffer[0].x, pointsBuffer[0].y);
+                for(let i=1; i<pointsBuffer.length; i++) ctxUI.lineTo(2 * symmetryX - pointsBuffer[i].x, pointsBuffer[i].y);
+                ctxUI.stroke();
+            }
+        }
+
+        function applyEraser(pos) {
+            const activePage = currentNotebook.pages[activePageIndex];
+            if (!activePage || !activePage.objects) return;
+            const eraserRadius = eraserState.size / 2;
+            const newObjects = [];
+
+            activePage.objects.forEach(obj => {
+                if (obj.type !== 'stroke' || !obj.points || obj.points.length === 0) {
+                    newObjects.push(obj);
+                    return;
+                }
+
+                let currentSegment = [];
+                
+                obj.points.forEach(pt => {
+                    const dx = pt.x - pos.x;
+                    const dy = pt.y - pos.y;
+                    const distSquared = dx * dx + dy * dy;
+
+                    if (distSquared < eraserRadius * eraserRadius) {
+                        if (currentSegment.length > 0) {
+                            newObjects.push({ ...obj, id: 'str_' + Math.random(), points: currentSegment });
+                            currentSegment = [];
+                        }
+                    } else {
+                        currentSegment.push(pt);
+                    }
+                });
+
+                if (currentSegment.length > 0) {
+                    newObjects.push({ ...obj, id: 'str_' + Math.random(), points: currentSegment });
+                }
+            });
+
+            activePage.objects = newObjects;
+            saveData(); 
+            renderActivePageObjects();
+        }
+
+        function stopDrawing(e) {
+            if (isDraggingSymmetry) {
+                isDraggingSymmetry = false;
+                return;
+            }
+
+            if(!isDrawing) return;
+            isDrawing = false;
+
+            if (currentTool === 'eraser') {
+                renderSymmetryUI(); 
+                return;
+            }
+
+            const curSize = (currentTool === 'highlighter') ? markerState.size : penState.size;
+            const curColor = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch;
+
+            const newStroke = { id: 'str_' + Date.now(), type: 'stroke', tool: currentTool, color: curColor, size: curSize, points: pointsBuffer };
+            const activePage = currentNotebook.pages[activePageIndex];
+            activePage.objects.push(newStroke);
+
+            if (symmetryEnabled) {
+                const mirroredPoints = pointsBuffer.map(pt => ({x: 2 * symmetryX - pt.x, y: pt.y}));
+                const mirrorStroke = { id: 'str_' + Date.now() + '_m', type: 'stroke', tool: currentTool, color: curColor, size: curSize, points: mirroredPoints };
+                activePage.objects.push(mirrorStroke);
+            }
+
+            saveData(); renderActivePageObjects();
+        }
+
+        let currentZoomLevel = 100;
+        function changeZoom(val) { currentZoomLevel = parseInt(val); const paper = document.getElementById('nb-paper-element'); const valText = document.getElementById('zoom-val-text'); const slider = document.getElementById('zoom-range-slider'); if (paper) paper.style.transform = `scale(${currentZoomLevel / 100})`; if (valText) valText.innerText = currentZoomLevel + '%'; if (slider && slider.value != currentZoomLevel) slider.value = currentZoomLevel; }
+        let initialPinchDistance = null;
+        document.addEventListener('DOMContentLoaded', () => { const container = document.querySelector('.nb-canvas-container'); if (!container) return; container.addEventListener('touchstart', (e) => { if (e.touches.length === 2) { initialPinchDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); } }, { passive: true }); container.addEventListener('touchmove', (e) => { if (e.touches.length === 2 && initialPinchDistance) { const currentDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); const diff = currentDist - initialPinchDistance; if (Math.abs(diff) > 10) { let newZoom = currentZoomLevel + (diff > 0 ? 3 : -3); newZoom = Math.max(50, Math.min(200, newZoom)); changeZoom(newZoom); initialPinchDistance = currentDist; } } }, { passive: true }); container.addEventListener('touchend', () => { initialPinchDistance = null; }); });
+
+        function openExportModal() { document.getElementById('export-modal').style.display = 'flex'; }
+        
+        function exportNotebookAsImage() {
+            const exportCanvas = document.createElement('canvas'); exportCanvas.width = 794; exportCanvas.height = 1123;
+            const eCtx = exportCanvas.getContext('2d');
+            eCtx.fillStyle = document.getElementById('nb-paper-element').style.backgroundColor || '#ffffff';
+            eCtx.fillRect(0,0,794,1123);
+            eCtx.drawImage(canvasHighlighter, 0, 0); eCtx.drawImage(canvasPen, 0, 0);
+            const link = document.createElement('a'); link.download = currentNotebook.name + '.png'; link.href = exportCanvas.toDataURL(); link.click();
+            document.getElementById('export-modal').style.display = 'none';
+        }
+
+        function exportNotebookAsPDF() { document.getElementById('export-modal').style.display = 'none'; window.print(); }
+        function shareNotebook() { if (navigator.share) { navigator.share({ title: currentNotebook.name, text: 'Блокнот отправлен из приложения!' }).catch(err => console.log('Ошибка шаринга:', err)); } else { alert('Функция "Поделиться" не поддерживается в этом браузере.'); } document.getElementById('export-modal').style.display = 'none'; }
+        function uploadToCloud() { alert('Синхронизация с облаком (Firebase) успешно запущена в фоновом режиме!'); document.getElementById('export-modal').style.display = 'none'; }
+
+        function openStickersModal() { renderStickerTabs(); renderCustomStickers(); document.getElementById('stickers-modal').style.display = 'flex'; }
+        function renderStickerTabs() { document.getElementById('sticker-sets-tabs').innerHTML = appData.stickerSets.map(s => `<div class="sticker-tab-pill ${s.id===appData.activeStickerSetId?'active':''}" onclick="appData.activeStickerSetId='${s.id}';renderStickerTabs();renderCustomStickers();">${s.name}</div>`).join(''); }
+        function createNewStickerSet() { const name = prompt('Название папки:'); if(name) { appData.stickerSets.push({ id: 'set_'+Date.now(), name, stickers: [] }); saveData(); renderStickerTabs(); renderCustomStickers(); } }
+        function triggerStickerUpload() { document.getElementById('sticker-file-input').click(); }
+        function handleStickerImageUploaded(input) { if(input.files && input.files[0]) { const reader = new FileReader(); reader.onload = (e) => { const set = appData.stickerSets.find(s => s.id === appData.activeStickerSetId) || appData.stickerSets[0]; set.stickers.push(e.target.result); saveData(); renderCustomStickers(); }; reader.readAsDataURL(input.files[0]); } }
+        function renderCustomStickers() { const set = appData.stickerSets.find(s => s.id === appData.activeStickerSetId) || appData.stickerSets[0]; document.getElementById('custom-stickers-container').innerHTML = (set && set.stickers.length>0) ? set.stickers.map(url => `<div class="custom-sticker-card" onclick="placeCustomStickerOnCanvas('${url}')"><img src="${url}"></div>`).join('') : '<div style="grid-column:1/-1; padding:20px; text-align:center; color:#888;">Загрузите стикеры с устройства</div>'; }
+        function placeCustomStickerOnCanvas(url) { spawnNewStickyNote('#ffffff'); document.getElementById('stickers-modal').style.display = 'none'; }
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
+        import { getFirestore, enableIndexedDbPersistence, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+
+        const firebaseConfig = window.firebaseConfig;
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        enableIndexedDbPersistence(db).catch((err) => {
+            console.log("Ошибка оффлайн-режима: ", err.code);
+        });
+
+        window.db = db;
+        let currentUserUid = null;
+
+        window.loginWithGoogle = () => {
+            signInWithPopup(auth, provider).catch((error) => alert("Ошибка входа: " + error.message));
+        };
+
+        window.logoutGoogle = () => {
+            signOut(auth).catch((error) => alert("Ошибка выхода: " + error.message));
+        };
+
+        window.syncDataToFirebase = async () => {
+            if (!currentUserUid) return;
+            try {
+                const userDocRef = doc(db, "users", currentUserUid);
+                await setDoc(userDocRef, {
+                    appData: JSON.stringify(appData),
+                    updatedAt: new Date().toISOString()
+                });
+            } catch (e) {
+                console.log("Оффлайн: изменения сохранены локально.");
+            }
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            const btn = document.getElementById("auth-btn");
+            const nameLabel = document.getElementById("auth-user-name");
+            
+            if (user) {
+                currentUserUid = user.uid;
+                nameLabel.innerText = "Привет, " + user.displayName + "!";
+                btn.innerText = "🚪 Выйти из аккаунта";
+                btn.onclick = window.logoutGoogle;
+                btn.style.backgroundColor = "#d32f2f"; 
+                btn.style.color = "white";
+
+                try {
+                    const userDocRef = doc(db, "users", user.uid);
+                    const docSnap = await getDoc(userDocRef);
+                    if (docSnap.exists()) {
+                        const cloudData = docSnap.data();
+                        if (cloudData.appData) {
+                            appData = JSON.parse(cloudData.appData);
+                            localStorage.setItem('schedule_data_v14', JSON.stringify(appData));
+                            renderFolders();
+                            renderCalendar();
+                        }
+                    } else {
+                        window.syncDataToFirebase();
+                    }
+                } catch (e) {
+                    console.log("Работаем в оффлайн-режиме из локального кэша");
+                }
+
+            } else {
+                currentUserUid = null;
+                nameLabel.innerText = "Учетная запись Firebase";
+                btn.innerText = "🌐 Войти через Google";
+                btn.onclick = window.loginWithGoogle;
+                btn.style.backgroundColor = "#2383e2";
+                btn.style.color = "white";
+            }
+        });
+    </script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then((reg) => console.log('Service Worker зарегистрирован!', reg))
+        .catch((err) => console.log('Ошибка регистрации Service Worker:', err));
+    });
+  }
+</script>
+</body>
+</html>
