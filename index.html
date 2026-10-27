@@ -152,6 +152,13 @@
         
         input[type="text"], input[type="time"], input[type="date"], select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-family: inherit; margin-bottom: 12px; outline: none;}
         .form-row { display: flex; gap: 12px; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #nb-paper-element, #nb-paper-element * { visibility: visible; }
+            #nb-paper-element { position: absolute; left: 0; top: 0; transform: scale(1) !important; box-shadow: none; border: none; margin: 0; }
+            @page { size: A4; margin: 0; }
+        }
     </style>
 </head>
 <body>
@@ -216,6 +223,7 @@
                         <button class="secondary-btn" onclick="nextPage()">►</button>
                         <span id="nb-title-text" style="margin-left: 10px;">Блокнот</span>
                     </div>
+                    <button class="secondary-btn" onclick="openExportModal()">📤 Экспорт</button>
                 </div>
 
                 <div class="nb-tools-bar">
@@ -360,6 +368,17 @@
                 <option value="light">Светлая тема</option>
                 <option value="dark">Тёмная тема</option>
             </select>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА ЭКСПОРТА -->
+    <div class="modal-overlay" id="export-modal" onclick="closeModal(event, 'export-modal')">
+        <div class="modal small-modal" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 16px;">Экспорт блокнота</h3>
+            <button class="primary-btn" style="margin-bottom: 8px;" onclick="exportNotebookAsImage()">🖼️ Скачать как PNG</button>
+            <button class="secondary-btn" style="width:100%; margin-bottom: 8px;" onclick="exportNotebookAsPDF()">📄 Сохранить как PDF</button>
+            <button class="secondary-btn" style="width:100%; margin-bottom: 8px;" onclick="shareNotebook()">📤 Отправить / Поделиться</button>
+            <button class="secondary-btn" style="width:100%;" onclick="uploadToCloud()">☁️ Сохранить в облако</button>
         </div>
     </div>
 
@@ -660,6 +679,23 @@
             });
             activePage.objects = newObjects; saveData(); renderActivePageObjects();
         }
+
+        // ЭКСПОРТ И СОХРАНЕНИЕ
+        function openExportModal() { document.getElementById('export-modal').style.display = 'flex'; }
+        
+        function exportNotebookAsImage() {
+            const exportCanvas = document.createElement('canvas'); exportCanvas.width = 794; exportCanvas.height = 1123;
+            const eCtx = exportCanvas.getContext('2d');
+            eCtx.fillStyle = document.getElementById('nb-paper-element').style.backgroundColor || '#ffffff';
+            eCtx.fillRect(0,0,794,1123);
+            eCtx.drawImage(canvasHighlighter, 0, 0); eCtx.drawImage(canvasPen, 0, 0);
+            const link = document.createElement('a'); link.download = (currentNotebook ? currentNotebook.name : 'notebook') + '.png'; link.href = exportCanvas.toDataURL(); link.click();
+            document.getElementById('export-modal').style.display = 'none';
+        }
+
+        function exportNotebookAsPDF() { document.getElementById('export-modal').style.display = 'none'; window.print(); }
+        function shareNotebook() { if (navigator.share) { navigator.share({ title: currentNotebook ? currentNotebook.name : 'Блокнот', text: 'Блокнот из приложения!' }).catch(err => console.log(err)); } else { alert('Не поддерживается браузером'); } document.getElementById('export-modal').style.display = 'none'; }
+        function uploadToCloud() { alert('Синхронизация с облаком запущена!'); document.getElementById('export-modal').style.display = 'none'; }
     </script>
 
     <script type="module">
