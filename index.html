@@ -8,15 +8,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Мое расписание & GoodNotes Studio</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Quicksand:wght@400;600;700&family=Comfortaa:wght@400;600;700&family=Roboto:wght@400;500;700&family=Montserrat:wght@400;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
-    
-    <!-- Подключаем PDF.js для импорта документов -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
         if (window.pdfjsLib) {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         }
     </script>
-
     <style>
         :root {
             --bg-color: #ffffff; --text-main: #37352f; --text-muted: #9a9a97; --sidebar-bg: #f7f7f5;
@@ -25,9 +22,9 @@
         }
 
         [data-theme="dark"] {
-            --bg-color: #fdfcf8; --sidebar-bg: #f4f1eb; --hover-bg: #eae5db; --border-color: #e3dec9;  
-            --text-main: #5c574f; --text-muted: #968f82; --card-bg: #ffffff; --modal-bg: #fdfcf8;
-            --today-dot: #6e6353; 
+            --bg-color: #202020; --sidebar-bg: #191919; --hover-bg: #2e2e2e; --border-color: #373737;  
+            --text-main: #d3d3d3; --text-muted: #808080; --card-bg: #252525; --modal-bg: #252525;
+            --today-dot: #a0a0a0; 
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -80,72 +77,82 @@
         .folder-carousel { display: flex; overflow-x: auto; gap: 12px; padding: 8px 0 16px 0; min-height: 70px;}
         .carousel-item { min-width: 220px; padding: 12px; border-radius: 8px; flex-shrink: 0; font-size: 13px; font-weight: 700; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 5px rgba(0,0,0,0.03); color: #37352f;}
         .files-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);}
-        .files-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px; overflow-y: auto; padding-bottom: 20px;}
-        .file-card { padding: 16px 10px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; text-align: center; cursor: pointer; transition: 0.2s; position: relative;}
+        .files-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; overflow-y: auto; padding-bottom: 20px;}
+        .file-card { padding: 18px 12px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 10px; text-align: center; cursor: pointer; transition: 0.2s; position: relative;}
         .file-card:hover { background: var(--hover-bg); transform: translateY(-2px);}
-        .file-icon { font-size: 36px; margin-bottom: 8px; }
-        .file-name { font-size: 12px; font-weight: 600; word-break: break-word; }
+        .file-icon { font-size: 38px; margin-bottom: 8px; }
+        .file-name { font-size: 12px; font-weight: 700; word-break: break-word; line-height: 1.3;}
 
-        /* GOODNOTES STUDIO - ЛЕНТА-СВИТОК */
-        #notebook-studio { display: none; flex-direction: row; flex-grow: 1; height: 100%; position: relative; background: var(--sidebar-bg); margin: -30px -40px; padding: 0; overflow: hidden; color: var(--text-main);}
-        
-        .nb-pages-sidebar { width: 200px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 12px 10px; gap: 12px; overflow-y: auto; flex-shrink: 0; transition: margin-left 0.25s ease;}
-        .nb-pages-sidebar.collapsed { margin-left: -200px; }
+        /* GOODNOTES STUDIO STYLES */
+        #notebook-studio { display: none; flex-direction: row; flex-grow: 1; height: 100%; position: relative; background: #e5e5e5; margin: -30px -40px; padding: 0; overflow: hidden; color: var(--text-main);}
+        [data-theme="dark"] #notebook-studio { background: #121212; }
+
+        .nb-pages-sidebar { width: 220px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 12px 10px; gap: 12px; overflow-y: auto; flex-shrink: 0; transition: margin-left 0.25s ease; z-index: 20;}
+        .nb-pages-sidebar.collapsed { margin-left: -220px; }
         .pages-sidebar-header { font-size: 12px; font-weight: 700; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; padding: 0 4px; }
         .page-thumb-card { border: 2px solid var(--border-color); border-radius: 8px; background: #ffffff; cursor: pointer; padding: 6px; text-align: center; transition: 0.2s;}
-        .page-thumb-card.active { border-color: #3182ce; box-shadow: 0 0 8px rgba(49, 130, 206, 0.3); }
-        .page-thumb-preview { width: 100%; height: 120px; background-size: cover; background-position: center; border-radius: 4px; border: 1px solid var(--border-color); background-color: #fff;}
+        .page-thumb-card.active { border-color: #2383e2; box-shadow: 0 0 8px rgba(35, 131, 226, 0.4); }
+        .page-thumb-preview { width: 100%; height: 130px; background-size: cover; background-position: center; border-radius: 4px; border: 1px solid var(--border-color); background-repeat: no-repeat; }
         .page-num-label { font-size: 11px; font-weight: 700; margin-top: 4px; color: var(--text-muted); }
         .add-page-btn { padding: 10px; border-radius: 6px; border: 2px dashed var(--border-color); background: transparent; cursor: pointer; font-size: 13px; font-weight: 700; color: var(--text-muted); text-align: center; transition: 0.2s;}
-        .add-page-btn:hover { border-color: #3182ce; color: #3182ce; background: var(--hover-bg); }
+        .add-page-btn:hover { border-color: #2383e2; color: #2383e2; background: var(--hover-bg); }
 
         .nb-main-area { flex-grow: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; position: relative;}
 
-        .nb-top-bar { background: var(--bg-color); border-bottom: 1px solid var(--border-color); padding: 8px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; z-index: 11;}
+        .nb-top-bar { background: var(--bg-color); border-bottom: 1px solid var(--border-color); padding: 8px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; z-index: 30; flex-shrink: 0;}
         .nb-title { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 10px;}
         
-        .nb-tools-bar { background: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); padding: 6px 16px; display: flex; align-items: center; gap: 8px; overflow-x: auto; z-index: 10; position: relative;}
-        .gn-tool-icon-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; background: var(--card-bg); color: var(--text-main); transition: 0.15s;}
+        .nb-tools-bar { background: var(--bg-color); border-bottom: 1px solid var(--border-color); padding: 6px 16px; display: flex; align-items: center; gap: 8px; z-index: 25; position: relative; flex-shrink: 0; flex-wrap: wrap;}
+        .gn-tool-icon-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; background: var(--card-bg); color: var(--text-main); transition: 0.15s;}
         .gn-tool-icon-btn:hover { background: var(--hover-bg); }
-        .gn-tool-icon-btn.active { background: #e2ebe5; border-color: #b5c7bc; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.04);}
+        .gn-tool-icon-btn.active { background: #e2ebe5; border-color: #a2c7b0; font-weight: 700; color: #1b4d2e; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
+        [data-theme="dark"] .gn-tool-icon-btn.active { background: #1c3829; border-color: #2a5a40; color: #94e3b5; }
 
-        .quick-swatches-bar { display: flex; align-items: center; gap: 6px; overflow-x: auto; padding: 4px 8px; background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border-color); max-width: 500px; scrollbar-width: thin; }
-        .swatch-circle { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; transition: transform 0.15s;}
+        .quick-swatches-bar { display: flex; align-items: center; gap: 5px; padding: 4px 8px; background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border-color); overflow-x: auto; max-width: 350px;}
+        .swatch-circle { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; transition: transform 0.15s;}
         .swatch-circle:hover { transform: scale(1.2); }
-        .swatch-circle.active { border-color: var(--text-main); transform: scale(1.25); }
+        .swatch-circle.active { border-color: var(--text-main); transform: scale(1.25); box-shadow: 0 0 4px rgba(0,0,0,0.3); }
+        .add-swatch-btn { width: 20px; height: 20px; border-radius: 50%; border: 2px dashed var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; flex-shrink: 0; color: var(--text-muted); background: transparent;}
+        .add-swatch-btn:hover { border-color: var(--text-main); color: var(--text-main); }
+        .eyedropper-btn { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border-color); background: var(--card-bg); display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; flex-shrink: 0; }
+        .eyedropper-btn:hover { background: var(--hover-bg); }
+        .eyedropper-btn.active { background: #2383e2; color: white; border-color: #2383e2; }
 
-        .gn-popover-panel { display: none; position: absolute; top: 52px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px; box-shadow: 0 12px 32px rgba(0,0,0,0.08); z-index: 100; width: 320px; flex-direction: column; gap: 14px; font-size: 13px;}
-        .gn-popover-header { font-size: 15px; font-weight: 700; color: var(--text-main); }
+        /* ПОПОВЕРЫ */
+        .gn-popover-panel { display: none; position: absolute; top: 100%; left: 16px; margin-top: 6px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px; box-shadow: 0 12px 36px rgba(0,0,0,0.18); z-index: 1000; width: 320px; flex-direction: column; gap: 14px; font-size: 13px;}
+        .gn-popover-header { font-size: 14px; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 6px;}
         
         .pen-type-tabs { display: flex; background: var(--sidebar-bg); padding: 3px; border-radius: 8px; gap: 2px; }
         .pen-tab-btn { flex: 1; padding: 8px 4px; text-align: center; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; color: var(--text-muted); transition: 0.15s; display: flex; flex-direction: column; align-items: center; gap: 4px;}
-        .pen-tab-btn.active { background: var(--card-bg); color: var(--text-main); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .pen-tab-btn.active { background: var(--card-bg); color: var(--text-main); box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-weight: 700;}
 
         .gn-slider-row { display: flex; flex-direction: column; gap: 4px; }
         .gn-slider-header { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;}
         .gn-slider { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--border-color); outline: none;}
-        .gn-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #3182ce; cursor: pointer; }
+        .gn-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #2383e2; cursor: pointer; }
 
         .gn-switch-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-weight: 600;}
         .gn-switch { position: relative; display: inline-block; width: 38px; height: 20px; }
         .gn-switch input { opacity: 0; width: 0; height: 0; }
         .gn-slider-toggle { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .2s; border-radius: 20px; }
         .gn-slider-toggle:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .2s; border-radius: 50%; }
-        input:checked + .gn-slider-toggle { background-color: #3182ce; }
+        input:checked + .gn-slider-toggle { background-color: #2383e2; }
         input:checked + .gn-slider-toggle:before { transform: translateX(18px); }
 
         /* ВЕРТИКАЛЬНЫЙ СВИТОК СТРАНИЦ */
-        .nb-canvas-container { flex-grow: 1; overflow-y: auto; overflow-x: auto; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; position: relative; background: var(--sidebar-bg); gap: 30px; touch-action: pan-y;}
-        .nb-page-paper { background: #ffffff; box-shadow: 0 8px 24px rgba(0,0,0,0.08); border-radius: 4px; position: relative; width: 794px; height: 1123px; border: 1px solid var(--border-color); transform-origin: top center; background-size: 100% 100%; background-repeat: no-repeat; flex-shrink: 0;}
-        .page-footer-tag { position: absolute; bottom: -22px; right: 8px; font-size: 11px; font-weight: 700; color: var(--text-muted); }
+        .nb-canvas-container { flex-grow: 1; overflow-y: auto; overflow-x: auto; padding: 40px 20px; position: relative; touch-action: pan-y;}
+        .nb-pages-wrapper { display: flex; flex-direction: column; align-items: center; gap: 30px; margin: 0 auto; width: 100%; }
+        
+        .nb-page-paper { background-color: #ffffff; box-shadow: 0 8px 24px rgba(0,0,0,0.12); border-radius: 4px; position: relative; width: 794px; height: 1123px; border: 1px solid var(--border-color); flex-shrink: 0; transform-origin: top center; background-repeat: repeat;}
+        .page-badge-label { position: absolute; right: -50px; top: 10px; background: rgba(0,0,0,0.4); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; pointer-events: none;}
 
-        canvas.layer-canvas { position: absolute; top: 0; left: 0; touch-action: none;}
-        .layer-highlighter { z-index: 1; }
+        canvas.layer-canvas { position: absolute; top: 0; left: 0; touch-action: none; border-radius: 4px;}
+        .layer-hl { z-index: 1; }
         .layer-pen { z-index: 2; }
         .layer-ui { z-index: 3; pointer-events: none; }
 
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--modal-overlay); justify-content: center; align-items: center; z-index: 1000; }
-        .modal { background-color: var(--modal-bg); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.12); overflow: hidden; position: relative; padding: 24px; max-height: 90vh; display: flex; flex-direction: column;}
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--modal-overlay); justify-content: center; align-items: center; z-index: 2000; }
+        .modal { background-color: var(--modal-bg); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.18); overflow: hidden; position: relative; padding: 24px; max-height: 90vh; display: flex; flex-direction: column;}
         .small-modal { width: 380px; }
 
         .emoji-picker-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; max-height: 140px; overflow-y: auto; padding: 6px; background: var(--sidebar-bg); border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px;}
@@ -158,26 +165,23 @@
 
         button.primary-btn { font-family: inherit; padding: 10px 16px; border-radius: 6px; border: none; background: #2383e2; color: white; cursor: pointer; width: 100%; font-weight: 600; margin-top: 8px;}
         button.secondary-btn { font-family: inherit; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-main); cursor: pointer; font-weight: 600; font-size: 13px;}
-        button.danger-btn { font-family: inherit; padding: 10px 16px; border-radius: 6px; border: 1px solid #d32f2f; background: transparent; color: #d32f2f; cursor: pointer; width: 100%; font-weight: 600; margin-top: 8px;}
-        button.danger-btn:hover { background: #ffebee; }
-
+        
         input[type="text"], input[type="time"], input[type="date"], select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-family: inherit; margin-bottom: 12px; outline: none;}
         .form-row { display: flex; gap: 12px; }
 
         @media print {
             body * { visibility: hidden; }
-            #notebook-studio, #notebook-studio *, .nb-canvas-container, .nb-canvas-container * { visibility: visible; }
-            .sidebar, .nb-top-bar, .nb-tools-bar, .nb-pages-sidebar { display: none !important; }
-            .nb-canvas-container { position: absolute; left: 0; top: 0; width: 100%; padding: 0; overflow: visible; display: block; }
-            .nb-page-paper { page-break-after: always; margin: 0 auto 20px auto; box-shadow: none; border: none; }
+            .nb-pages-wrapper, .nb-pages-wrapper * { visibility: visible; }
+            .nb-pages-wrapper { position: absolute; left: 0; top: 0; width: 100%; }
+            .nb-page-paper { page-break-after: always; margin: 0; box-shadow: none; border: none; }
             @page { size: A4; margin: 0; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Скрытый элемент выбора PDF файла -->
     <input type="file" id="pdf-file-input" accept="application/pdf" style="display:none;" onchange="handlePDFUpload(event)">
+    <input type="color" id="hidden-color-picker" style="display:none;" onchange="onCustomColorPicked(event)">
 
     <!-- САЙДБАР -->
     <div class="sidebar">
@@ -221,7 +225,7 @@
             <div class="files-grid" id="fc-files"></div>
         </div>
 
-        <!-- GOODNOTES STUDIO СВИТОК -->
+        <!-- GOODNOTES STUDIO -->
         <div id="notebook-studio">
             <div class="nb-pages-sidebar" id="nb-pages-sidebar">
                 <div class="pages-sidebar-header">
@@ -240,61 +244,91 @@
                         <span id="nb-page-num-display" style="font-size:13px; font-weight:700; background:var(--sidebar-bg); padding:4px 10px; border-radius:6px; border:1px solid var(--border-color);">Стр. 1 из 1</span>
                         <span id="nb-title-text" style="margin-left: 10px;">Блокнот</span>
                     </div>
-                    <button class="secondary-btn" onclick="openExportModal()">📤 Экспорт</button>
+                    <div style="display:flex; gap:8px;">
+                        <button class="secondary-btn" title="Отменить" onclick="undoActivePage()">↩</button>
+                        <button class="secondary-btn" title="Вернуть" onclick="redoActivePage()">↪</button>
+                        <button class="secondary-btn" onclick="openExportModal()">📤 Экспорт</button>
+                    </div>
                 </div>
 
-                <div class="nb-tools-bar">
+                <div class="nb-tools-bar" id="nb-tools-bar">
                     <button class="gn-tool-icon-btn active" id="tool-pen" onclick="handleToolBtnClick('pen')">✒️ Ручка</button>
                     <button class="gn-tool-icon-btn" id="tool-highlighter" onclick="handleToolBtnClick('highlighter')">🖍️ Маркер</button>
                     <button class="gn-tool-icon-btn" id="tool-eraser" onclick="handleToolBtnClick('eraser')">🧹 Ластик</button>
+                    <button class="gn-tool-icon-btn" id="tool-template" onclick="handleToolBtnClick('template')">📄 Шаблон</button>
 
                     <span style="border-left:1px solid var(--border-color); height:20px; margin:0 4px;"></span>
                     <div class="quick-swatches-bar" id="quick-swatches-container"></div>
+                    <div class="eyedropper-btn" id="eyedropper-btn" title="Пипетка цвета" onclick="toggleEyedropper()">🧪</div>
+
+                    <!-- ПОПОВЕР РУЧКИ -->
+                    <div class="gn-popover-panel" id="pen-popover-panel" onclick="event.stopPropagation()">
+                        <div class="gn-popover-header">Настройки Ручки</div>
+                        <div class="pen-type-tabs">
+                            <div class="pen-tab-btn active" id="tab-fountain" onclick="setPenSubtype('fountain')"><span>✒️</span><span>Перьевая</span></div>
+                            <div class="pen-tab-btn" id="tab-ballpoint" onclick="setPenSubtype('ballpoint')"><span>🖊️</span><span>Шариковая</span></div>
+                            <div class="pen-tab-btn" id="tab-pencil" onclick="setPenSubtype('pencil')"><span>✏️</span><span>Карандаш</span></div>
+                        </div>
+                        <div class="gn-slider-row">
+                            <div class="gn-slider-header"><span>Толщина</span><span id="val-pen-size">6 px</span></div>
+                            <input type="range" class="gn-slider" min="1" max="50" value="6" oninput="updatePenSize(this.value)">
+                        </div>
+                        <div class="gn-slider-row" id="row-pressure">
+                            <div class="gn-slider-header"><span>Чувствительность к нажиму</span><span id="val-pressure">50%</span></div>
+                            <input type="range" class="gn-slider" min="0" max="100" value="50" oninput="updatePenSetting('pressure', this.value)">
+                        </div>
+                    </div>
+
+                    <!-- ПОПОВЕР МАРКЕРА -->
+                    <div class="gn-popover-panel" id="marker-popover-panel" onclick="event.stopPropagation()">
+                        <div class="gn-popover-header">Настройки Маркера</div>
+                        <div class="gn-slider-row">
+                            <div class="gn-slider-header"><span>Толщина маркера</span><span id="val-marker-size">24 px</span></div>
+                            <input type="range" class="gn-slider" min="5" max="100" value="24" oninput="updateMarkerSize(this.value)">
+                        </div>
+                    </div>
+
+                    <!-- ПОПОВЕР ЛАСТИКА -->
+                    <div class="gn-popover-panel" id="eraser-popover-panel" onclick="event.stopPropagation()">
+                        <div class="gn-popover-header">Настройки Ластика</div>
+                        <div class="gn-slider-row">
+                            <div class="gn-slider-header"><span>Размер ластика</span><span id="val-eraser-size">20 px</span></div>
+                            <input type="range" class="gn-slider" min="5" max="100" value="20" oninput="updateEraserSize(this.value)">
+                        </div>
+                        <hr style="border:none; border-top:1px solid var(--border-color); margin-top:4px;">
+                        <div class="gn-slider-header">Стирать только:</div>
+                        <div class="gn-switch-row"><span>Шариковая Ручка</span><label class="gn-switch"><input type="checkbox" id="ef-ballpoint" checked onchange="updateEraserFilter('ballpoint', this.checked)"><span class="gn-slider-toggle"></span></label></div>
+                        <div class="gn-switch-row"><span>Перьевая Ручка</span><label class="gn-switch"><input type="checkbox" id="ef-fountain" checked onchange="updateEraserFilter('fountain', this.checked)"><span class="gn-slider-toggle"></span></label></div>
+                        <div class="gn-switch-row"><span>Карандаш</span><label class="gn-switch"><input type="checkbox" id="ef-pencil" checked onchange="updateEraserFilter('pencil', this.checked)"><span class="gn-slider-toggle"></span></label></div>
+                        <div class="gn-switch-row"><span>Маркер</span><label class="gn-switch"><input type="checkbox" id="ef-highlighter" checked onchange="updateEraserFilter('highlighter', this.checked)"><span class="gn-slider-toggle"></span></label></div>
+                    </div>
+
+                    <!-- ПОПОВЕР ШАБЛОНА И ЦВЕТА СТРАНИЦЫ -->
+                    <div class="gn-popover-panel" id="template-popover-panel" onclick="event.stopPropagation()">
+                        <div class="gn-popover-header">Настройки Листа</div>
+                        <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Тип верстки:</div>
+                        <div class="pen-type-tabs" id="pattern-tabs">
+                            <div class="pen-tab-btn active" onclick="setPagePattern('grid')"><span>📐</span><span>Клетка</span></div>
+                            <div class="pen-tab-btn" onclick="setPagePattern('line')"><span>📏</span><span>Линия</span></div>
+                            <div class="pen-tab-btn" onclick="setPagePattern('dot')"><span>💬</span><span>Точки</span></div>
+                            <div class="pen-tab-btn" onclick="setPagePattern('blank')"><span>📄</span><span>Чистый</span></div>
+                        </div>
+                        <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-top:4px;">Цвет бумаги:</div>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <div class="pastel-opt selected" style="background:#ffffff; border:1px solid #ccc;" onclick="setPageBgColor('#ffffff', this)"></div>
+                            <div class="pastel-opt" style="background:#fcf8ed;" onclick="setPageBgColor('#fcf8ed', this)"></div>
+                            <div class="pastel-opt" style="background:#eef6fc;" onclick="setPageBgColor('#eef6fc', this)"></div>
+                            <div class="pastel-opt" style="background:#f2f8f4;" onclick="setPageBgColor('#f2f8f4', this)"></div>
+                            <div class="pastel-opt" style="background:#1e1e1e;" onclick="setPageBgColor('#1e1e1e', this)"></div>
+                        </div>
+                        <button class="secondary-btn" style="width:100%; margin-top:6px; font-size:12px;" onclick="applyTemplateToAllPages()">Применить ко всем страницам</button>
+                    </div>
+
                 </div>
 
-                <!-- ПОПОВЕРЫ НАСТРОЕК -->
-                <div class="gn-popover-panel" id="pen-popover-panel">
-                    <div class="gn-popover-header" id="pen-popover-title">Перьевая Ручка</div>
-                    <div class="pen-type-tabs">
-                        <div class="pen-tab-btn active" id="tab-fountain" onclick="setPenSubtype('fountain')"><span>✒️</span><span>Перьевая</span></div>
-                        <div class="pen-tab-btn" id="tab-ballpoint" onclick="setPenSubtype('ballpoint')"><span>🖊️</span><span>Шариковая</span></div>
-                        <div class="pen-tab-btn" id="tab-pencil" onclick="setPenSubtype('pencil')"><span>✏️</span><span>Карандаш</span></div>
-                    </div>
-                    <div class="gn-slider-row">
-                        <div class="gn-slider-header"><span>Толщина</span><span id="val-pen-size">6 px</span></div>
-                        <input type="range" class="gn-slider" min="1" max="50" value="6" oninput="updatePenSize(this.value)">
-                    </div>
-                    <div class="gn-slider-row" id="row-pressure">
-                        <div class="gn-slider-header"><span>Чувствительность к нажиму</span><span id="val-pressure">50%</span></div>
-                        <input type="range" class="gn-slider" min="0" max="100" value="50" oninput="updatePenSetting('pressure', this.value)">
-                    </div>
-                </div>
-
-                <div class="gn-popover-panel" id="marker-popover-panel">
-                    <div class="gn-popover-header">Маркер</div>
-                    <div class="gn-slider-row">
-                        <div class="gn-slider-header"><span>Толщина маркера</span><span id="val-marker-size">24 px</span></div>
-                        <input type="range" class="gn-slider" min="5" max="100" value="24" oninput="updateMarkerSize(this.value)">
-                    </div>
-                </div>
-
-                <div class="gn-popover-panel" id="eraser-popover-panel">
-                    <div class="gn-popover-header">Ластик</div>
-                    <div class="gn-slider-row">
-                        <div class="gn-slider-header"><span>Размер ластика</span><span id="val-eraser-size">20 px</span></div>
-                        <input type="range" class="gn-slider" min="5" max="100" value="20" oninput="updateEraserSize(this.value)">
-                    </div>
-                    <hr style="border:none; border-top:1px solid var(--border-color); margin-top:8px;">
-                    <div class="gn-slider-header" style="margin-top:4px;">Стирать только:</div>
-                    <div class="gn-switch-row"><span>Шариковая Ручка</span><label class="gn-switch"><input type="checkbox" id="ef-ballpoint" checked onchange="updateEraserFilter('ballpoint', this.checked)"><span class="gn-slider-toggle"></span></label></div>
-                    <div class="gn-switch-row"><span>Перьевая Ручка</span><label class="gn-switch"><input type="checkbox" id="ef-fountain" checked onchange="updateEraserFilter('fountain', this.checked)"><span class="gn-slider-toggle"></span></label></div>
-                    <div class="gn-switch-row"><span>Карандаш</span><label class="gn-switch"><input type="checkbox" id="ef-pencil" checked onchange="updateEraserFilter('pencil', this.checked)"><span class="gn-slider-toggle"></span></label></div>
-                    <div class="gn-switch-row"><span>Маркер</span><label class="gn-switch"><input type="checkbox" id="ef-highlighter" checked onchange="updateEraserFilter('highlighter', this.checked)"><span class="gn-slider-toggle"></span></label></div>
-                </div>
-
-                <!-- ОБЛАСТЬ ПРОКРУТКИ СТРАНИЦ ДОКУМЕНТА -->
-                <div class="nb-canvas-container" id="nb-canvas-container" onscroll="handleNotebookScroll()">
-                    <!-- Страницы будут создаваться динамически списком -->
+                <!-- КОНТЕЙНЕР БЕСКОНЕЧНОГО ВЕРТИКАЛЬНОГО СВИТОКА -->
+                <div class="nb-canvas-container" id="nb-scroll-container">
+                    <div class="nb-pages-wrapper" id="nb-pages-wrapper"></div>
                 </div>
             </div>
         </div>
@@ -321,25 +355,15 @@
         </div>
     </div>
 
-    <!-- КОНТЕКСТНОЕ МЕНЮ БЛОКНОТА (УДЕРЖАНИЕ / ПРАВЫЙ КЛИК) -->
     <div class="modal-overlay" id="notebook-context-modal" onclick="closeModal(event, 'notebook-context-modal')">
         <div class="modal small-modal" onclick="event.stopPropagation()">
-            <h3 style="margin-bottom: 14px;" id="ctx-nb-title">📘 Настройки блокнота</h3>
-            
-            <p style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Название:</p>
-            <input type="text" id="ctx-nb-name-input" placeholder="Название блокнота">
-            <button class="secondary-btn" style="width:100%; margin-bottom:14px;" onclick="saveRenameNotebookFromCtx()">💾 Сохранить название</button>
-
-            <p style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Перенести в папку:</p>
-            <div style="display:flex; gap:8px; margin-bottom:14px;">
+            <h3 style="margin-bottom: 14px;" id="ctx-nb-title">Управление блокнотом</h3>
+            <button class="primary-btn" style="margin-bottom:8px;" onclick="renameNotebookFromCtx()">✏️ Переименовать</button>
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
                 <select id="ctx-nb-folder-select" style="margin:0;"></select>
                 <button class="secondary-btn" onclick="moveNotebookFromCtx()">Перенести</button>
             </div>
-
-            <p style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Действия:</p>
-            <button class="secondary-btn" style="width:100%; margin-bottom:8px;" onclick="exportNotebookFromCtx('pdf')">📄 Сохранить в PDF</button>
-            <button class="secondary-btn" style="width:100%; margin-bottom:8px;" onclick="exportNotebookFromCtx('png')">🖼️ Скачать 1-ю страницу PNG</button>
-            <button class="danger-btn" onclick="deleteNotebookFromCtx()">🗑️ Удалить блокнот</button>
+            <button class="secondary-btn" style="width:100%; color:#d32f2f; border-color:#d32f2f;" onclick="deleteNotebookFromCtx()">🗑️ Удалить блокнот</button>
         </div>
     </div>
 
@@ -407,14 +431,12 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА ЭКСПОРТА -->
     <div class="modal-overlay" id="export-modal" onclick="closeModal(event, 'export-modal')">
         <div class="modal small-modal" onclick="event.stopPropagation()">
             <h3 style="margin-bottom: 16px;">Экспорт блокнота</h3>
-            <button class="primary-btn" style="margin-bottom: 8px;" onclick="exportNotebookAsImage()">🖼️ Скачать текущую страницу PNG</button>
-            <button class="secondary-btn" style="width:100%; margin-bottom: 8px;" onclick="exportNotebookAsPDF()">📄 Сохранить весь файл как PDF</button>
+            <button class="primary-btn" style="margin-bottom: 8px;" onclick="exportNotebookAsImage()">🖼️ Скачать как PNG</button>
+            <button class="secondary-btn" style="width:100%; margin-bottom: 8px;" onclick="exportNotebookAsPDF()">📄 Сохранить как PDF</button>
             <button class="secondary-btn" style="width:100%; margin-bottom: 8px;" onclick="shareNotebook()">📤 Отправить / Поделиться</button>
-            <button class="secondary-btn" style="width:100%;" onclick="uploadToCloud()">☁️ Сохранить в облако</button>
         </div>
     </div>
 
@@ -425,18 +447,65 @@
         let selectedFolderIcon = standardEmojiList[0]; let selectedFolderColor = taskPastelColors[0];
         let selectedTaskIcon = standardEmojiList[11]; let selectedTaskColor = taskPastelColors[0];
 
-        let penSwatches = JSON.parse(localStorage.getItem('pen_swatches_v15')) || ['#37352f', '#d32f2f', '#1976d2', '#388e3c', '#f57c00', '#7b1fa2'];
-        let highlighterSwatches = JSON.parse(localStorage.getItem('hl_swatches_v15')) || ['#ffe0b2', '#fff9c4', '#c8e6c9', '#b3e5fc', '#f8bbd0'];
+        let penSwatches = JSON.parse(localStorage.getItem('pen_swatches_v20')) || ['#37352f', '#d32f2f', '#1976d2', '#388e3c', '#f57c00', '#7b1fa2', '#e91e63', '#009688', '#ffeb3b', '#795548', '#607d8b'];
+        let highlighterSwatches = JSON.parse(localStorage.getItem('hl_swatches_v20')) || ['#ffe0b2', '#fff9c4', '#c8e6c9', '#b3e5fc', '#f8bbd0', '#e1bee7', '#d1c4e9'];
         let selectedPenSwatch = penSwatches[0]; let selectedHlSwatch = highlighterSwatches[0];
+        let isEyedropperActive = false;
 
         let penState = JSON.parse(localStorage.getItem('pen_state_v15')) || { subtype: 'fountain', size: 6, pressure: 50 };
         let markerState = JSON.parse(localStorage.getItem('marker_state_v15')) || { size: 24 };
         let eraserState = JSON.parse(localStorage.getItem('eraser_state_v15')) || { size: 20, filters: {ballpoint:true, fountain:true, pencil:true, highlighter:true} };
 
-        let appData = JSON.parse(localStorage.getItem('schedule_data_v15')) || { folders: [{ id: 'f1', name: 'Учеба', icon: '🎓', color: '#BAE1FF' }], tasks: [], files: [], theme: 'light', font: "'Nunito', sans-serif" };
+        let appData = JSON.parse(localStorage.getItem('schedule_data_v15')) || { folders: [{ id: 'f1', name: 'Учеба', icon: '🎓', color: '#BAE1FF' }], tasks: [], files: [], theme: 'light' };
 
-        function saveData() { 
-            localStorage.setItem('schedule_data_v15', JSON.stringify(appData));
+        // INDEXEDDB ХРАНИЛИЩЕ
+        const DB_NAME = 'GoodNotesAppDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'app_store';
+
+        function openIDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function getIDBItem(key) {
+            try {
+                const db = await openIDB();
+                return new Promise((resolve) => {
+                    const tx = db.transaction(STORE_NAME, 'readonly');
+                    const store = tx.objectStore(STORE_NAME);
+                    const req = store.get(key);
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => resolve(null);
+                });
+            } catch (e) { return null; }
+        }
+
+        async function setIDBItem(key, val) {
+            try {
+                const db = await openIDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(STORE_NAME, 'readwrite');
+                    const store = tx.objectStore(STORE_NAME);
+                    const req = store.put(val, key);
+                    req.onsuccess = () => resolve(true);
+                    req.onerror = (e) => reject(e.target.error);
+                });
+            } catch (e) { console.error('IDB error:', e); }
+        }
+
+        async function saveData() { 
+            try { localStorage.setItem('schedule_data_v15', JSON.stringify(appData)); } catch (e) {}
+            await setIDBItem('schedule_data_v15', appData);
+            localStorage.setItem('pen_swatches_v20', JSON.stringify(penSwatches));
+            localStorage.setItem('hl_swatches_v20', JSON.stringify(highlighterSwatches));
             localStorage.setItem('pen_state_v15', JSON.stringify(penState));
             localStorage.setItem('marker_state_v15', JSON.stringify(markerState));
             localStorage.setItem('eraser_state_v15', JSON.stringify(eraserState));
@@ -448,19 +517,21 @@
         let currentDate = new Date(); let currentWeekDate = null;
         let contextTargetFolderId = null; let contextTargetTaskId = null; let contextTargetNbId = null;
         let editingFolderId = null; let editingTaskId = null; let addingTaskToDate = null;
-        let nbTouchTimer = null; let isNbLongPress = false;
 
-        document.addEventListener('DOMContentLoaded', () => { 
+        document.addEventListener('DOMContentLoaded', async () => { 
+            const savedIDBData = await getIDBItem('schedule_data_v15');
+            if (savedIDBData) appData = savedIDBData;
             if (appData.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); 
             initEmojiGrids(); initPastelPickers(); 
             renderFolders(); renderCalendar(); 
-            document.getElementById('ef-ballpoint').checked = eraserState.filters.ballpoint;
-            document.getElementById('ef-fountain').checked = eraserState.filters.fountain;
-            document.getElementById('ef-pencil').checked = eraserState.filters.pencil;
-            document.getElementById('ef-highlighter').checked = eraserState.filters.highlighter;
+            
+            document.addEventListener('pointerdown', (e) => {
+                if (!e.target.closest('.gn-popover-panel') && !e.target.closest('.gn-tool-icon-btn')) {
+                    closeAllPopovers();
+                }
+            });
         });
 
-        // БАЗОВЫЕ ФУНКЦИИ И КАЛЕНДАРЬ
         function getTodayStr() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
         function dateToStr(dObj) { return `${dObj.getFullYear()}-${String(dObj.getMonth()+1).padStart(2,'0')}-${String(dObj.getDate()).padStart(2,'0')}`; }
 
@@ -484,130 +555,75 @@
         function editCurrentFolder() { document.getElementById('folder-context-modal').style.display = 'none'; const f = appData.folders.find(x => x.id === contextTargetFolderId); if(f) { editingFolderId = f.id; document.getElementById('folder-name-input').value = f.name; selectedFolderIcon = f.icon; selectedFolderColor = f.color; initEmojiGrids(); initPastelPickers(); document.getElementById('folder-modal').style.display = 'flex'; } }
         function deleteCurrentFolder() { appData.folders = appData.folders.filter(x => x.id !== contextTargetFolderId); saveData(); renderFolders(); document.getElementById('folder-context-modal').style.display = 'none'; showMonthView(); }
 
-        function openFolderView(folderId) { contextTargetFolderId = folderId; const f = appData.folders.find(x => x.id === folderId); document.getElementById('main-title').innerText = `${f.icon} ${f.name}`; document.getElementById('month-view').style.display = 'none'; document.getElementById('week-view').style.display = 'none'; document.getElementById('notebook-studio').style.display = 'none'; document.getElementById('back-btn').style.display = 'block'; document.getElementById('folder-view').style.display = 'flex'; renderFolderViewData(); }
+        function openFolderView(folderId) { contextTargetFolderId = folderId; const f = appData.folders.find(x => x.id === folderId); document.getElementById('main-title').innerText = `${f?f.icon:'📁'} ${f?f.name:'Папка'}`; document.getElementById('month-view').style.display = 'none'; document.getElementById('week-view').style.display = 'none'; document.getElementById('notebook-studio').style.display = 'none'; document.getElementById('back-btn').style.display = 'block'; document.getElementById('folder-view').style.display = 'flex'; renderFolderViewData(); }
         
         function renderFolderViewData() { 
-            const carousel = document.getElementById('fc-tasks'); 
-            const folderTasks = appData.tasks.filter(t => t.folderId === contextTargetFolderId); 
+            const carousel = document.getElementById('fc-tasks'); const folderTasks = appData.tasks.filter(t => t.folderId === contextTargetFolderId); 
             if(folderTasks.length === 0) carousel.innerHTML = '<div style="font-size:12px; color:var(--text-muted); padding:10px;">Нет привязанных задач</div>'; 
             else carousel.innerHTML = folderTasks.map(t => `<div class="carousel-item" style="background:${t.color||'#FFB3BA'}"><div>${t.icon||'📌'} ${t.text}</div></div>`).join(''); 
             
-            const filesGrid = document.getElementById('fc-files'); 
-            const folderFiles = appData.files.filter(file => file.folderId === contextTargetFolderId); 
-            if(folderFiles.length === 0) {
-                filesGrid.innerHTML = '<div style="font-size:12px; color:var(--text-muted);">Пусто. Нажмите "+ Добавить Блокнот" или "Импорт PDF"</div>'; 
-            } else {
-                filesGrid.innerHTML = folderFiles.map(file => `
-                    <div class="file-card" 
-                         onclick="handleNbClick(event, '${file.id}')" 
-                         oncontextmenu="handleNbContextMenu(event, '${file.id}')"
-                         ontouchstart="handleNbTouchStart(event, '${file.id}')"
-                         ontouchend="handleNbTouchEnd(event)"
-                         ontouchmove="handleNbTouchCancel(event)">
-                        <div class="file-icon">📘</div>
-                        <div class="file-name">${file.name}</div>
-                    </div>
-                `).join(''); 
+            const filesGrid = document.getElementById('fc-files'); const folderFiles = appData.files.filter(file => file.folderId === contextTargetFolderId); 
+            if(folderFiles.length === 0) filesGrid.innerHTML = '<div style="font-size:12px; color:var(--text-muted);">Нет блокнотов</div>'; 
+            else {
+                filesGrid.innerHTML = '';
+                folderFiles.forEach(file => {
+                    const div = document.createElement('div');
+                    div.className = 'file-card';
+                    div.innerHTML = `<div class="file-icon">📘</div><div class="file-name">${file.name}</div>`;
+                    div.onclick = () => launchNotebookStudio(file.id);
+                    
+                    let longPressTimer;
+                    div.addEventListener('touchstart', (e) => {
+                        longPressTimer = setTimeout(() => openNotebookContextMenu(file.id, file.name), 500);
+                    });
+                    div.addEventListener('touchend', () => clearTimeout(longPressTimer));
+                    div.addEventListener('touchmove', () => clearTimeout(longPressTimer));
+                    div.oncontextmenu = (e) => { e.preventDefault(); openNotebookContextMenu(file.id, file.name); };
+
+                    filesGrid.appendChild(div);
+                });
             }
         }
 
-        // ОБРАБОТЧИКИ УДЕРЖАНИЯ / ПРАВОГО КЛИКА НА БЛОКНОТ
-        function openNbContextModal(nbId) {
-            contextTargetNbId = nbId;
-            const nb = appData.files.find(x => x.id === nbId);
-            if (!nb) return;
-
-            document.getElementById('ctx-nb-title').innerText = `📘 ${nb.name}`;
-            document.getElementById('ctx-nb-name-input').value = nb.name;
-
+        function openNotebookContextMenu(id, name) {
+            contextTargetNbId = id;
+            document.getElementById('ctx-nb-title').innerText = name;
             const fSelect = document.getElementById('ctx-nb-folder-select');
-            fSelect.innerHTML = appData.folders.map(f => `<option value="${f.id}" ${f.id === nb.folderId ? 'selected' : ''}>${f.icon} ${f.name}</option>`).join('');
-
+            fSelect.innerHTML = appData.folders.map(f => `<option value="${f.id}" ${f.id===contextTargetFolderId?'selected':''}>${f.icon} ${f.name}</option>`).join('');
             document.getElementById('notebook-context-modal').style.display = 'flex';
         }
 
-        function handleNbContextMenu(e, nbId) {
-            e.preventDefault();
-            openNbContextModal(nbId);
-        }
-
-        function handleNbTouchStart(e, nbId) {
-            isNbLongPress = false;
-            nbTouchTimer = setTimeout(() => {
-                isNbLongPress = true;
-                openNbContextModal(nbId);
-            }, 500);
-        }
-
-        function handleNbTouchEnd(e) {
-            if (nbTouchTimer) clearTimeout(nbTouchTimer);
-        }
-
-        function handleNbTouchCancel(e) {
-            if (nbTouchTimer) clearTimeout(nbTouchTimer);
-        }
-
-        function handleNbClick(e, nbId) {
-            if (isNbLongPress) {
-                isNbLongPress = false;
-                return;
-            }
-            launchNotebookStudio(nbId);
-        }
-
-        function saveRenameNotebookFromCtx() {
-            const newName = document.getElementById('ctx-nb-name-input').value.trim();
-            if (!newName) return;
-            const nb = appData.files.find(x => x.id === contextTargetNbId);
-            if (nb) {
-                nb.name = newName;
-                saveData();
-                renderFolderViewData();
-            }
+        function renameNotebookFromCtx() {
             document.getElementById('notebook-context-modal').style.display = 'none';
+            const nb = appData.files.find(x => x.id === contextTargetNbId);
+            if(!nb) return;
+            const newName = prompt('Новое название блокнота:', nb.name);
+            if(newName) { nb.name = newName; saveData(); renderFolderViewData(); }
         }
 
         function moveNotebookFromCtx() {
-            const targetFolderId = document.getElementById('ctx-nb-folder-select').value;
+            const newFolderId = document.getElementById('ctx-nb-folder-select').value;
             const nb = appData.files.find(x => x.id === contextTargetNbId);
-            if (nb) {
-                nb.folderId = targetFolderId;
-                saveData();
-                renderFolderViewData();
-            }
+            if(nb) { nb.folderId = newFolderId; saveData(); renderFolderViewData(); }
             document.getElementById('notebook-context-modal').style.display = 'none';
-        }
-
-        function exportNotebookFromCtx(format) {
-            const nb = appData.files.find(x => x.id === contextTargetNbId);
-            document.getElementById('notebook-context-modal').style.display = 'none';
-            if (!nb) return;
-
-            if (format === 'pdf') {
-                launchNotebookStudio(nb.id);
-                setTimeout(() => exportNotebookAsPDF(), 200);
-            } else if (format === 'png') {
-                launchNotebookStudio(nb.id);
-                setTimeout(() => exportNotebookAsImage(), 200);
-            }
         }
 
         function deleteNotebookFromCtx() {
-            appData.files = appData.files.filter(x => x.id !== contextTargetNbId);
-            saveData();
-            renderFolderViewData();
+            if(confirm('Удалить этот блокнот?')) {
+                appData.files = appData.files.filter(x => x.id !== contextTargetNbId);
+                saveData(); renderFolderViewData();
+            }
             document.getElementById('notebook-context-modal').style.display = 'none';
         }
 
         function openCreateNotebookModal() { document.getElementById('notebook-modal').style.display = 'flex'; }
-        function saveAndLaunchNotebook() { const title = document.getElementById('nb-input-title').value || 'Блокнот'; const newNb = { id: 'nb_'+Date.now(), folderId: contextTargetFolderId, type: 'notebook', name: title, pages: [{ id: 'p_1', objects: [] }] }; appData.files.push(newNb); saveData(); document.getElementById('notebook-modal').style.display = 'none'; renderFolderViewData(); launchNotebookStudio(newNb.id); }
+        function saveAndLaunchNotebook() { const title = document.getElementById('nb-input-title').value || 'Блокнот'; const newNb = { id: 'nb_'+Date.now(), folderId: contextTargetFolderId, type: 'notebook', name: title, pages: [{ id: 'p_1', pattern: 'grid', bgColor: '#ffffff', objects: [], undoStack: [] }] }; appData.files.push(newNb); saveData(); document.getElementById('notebook-modal').style.display = 'none'; renderFolderViewData(); launchNotebookStudio(newNb.id); }
 
-        // ИМПОРТ PDF
         function triggerPDFImport() { document.getElementById('pdf-file-input').click(); }
         async function handlePDFUpload(event) {
             const file = event.target.files[0];
             if (!file || file.type !== 'application/pdf') return;
-            alert('Обработка PDF файла... Страницы создаются.');
+            alert('Обработка PDF... Пожалуйста, подождите несколько секунд.');
             try {
                 const arrayBuffer = await file.arrayBuffer();
                 const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -620,11 +636,11 @@
                     const viewport = page.getViewport({ scale: scale });
                     const tempCanvas = document.createElement('canvas');
                     const tempCtx = tempCanvas.getContext('2d');
-                    tempCanvas.width = 794;
-                    tempCanvas.height = 1123;
+                    tempCanvas.width = viewport.width;
+                    tempCanvas.height = viewport.height;
                     await page.render({ canvasContext: tempCtx, viewport: viewport }).promise;
-                    const bgDataUrl = tempCanvas.toDataURL('image/png');
-                    newPages.push({ id: 'p_' + Date.now() + '_' + pageNum, bgImage: bgDataUrl, objects: [] });
+                    const bgDataUrl = tempCanvas.toDataURL('image/jpeg', 0.8);
+                    newPages.push({ id: 'p_' + Date.now() + '_' + pageNum, bgImage: bgDataUrl, pattern: 'blank', bgColor: '#ffffff', objects: [], undoStack: [] });
                 }
                 const newNb = { id: 'nb_' + Date.now(), folderId: contextTargetFolderId, type: 'notebook', name: file.name.replace('.pdf', ''), pages: newPages };
                 appData.files.push(newNb); saveData(); renderFolderViewData(); launchNotebookStudio(newNb.id);
@@ -658,7 +674,7 @@
                     else { card.style.borderColor = t.color; }
                     
                     card.innerHTML = `<div style="display:flex; align-items:center; gap:6px;"><span>${t.icon||'📌'}</span> <span>${t.text}</span></div><div class="task-check-icon" style="color:${t.color}">✔</div>`; 
-                    card.onclick = (e) => { if (t.type !== 'event') { t.completed = !t.completed; saveData(); showWeekView(currentWeekDate); } };
+                    card.onclick = () => { if (t.type !== 'event') { t.completed = !t.completed; saveData(); showWeekView(currentWeekDate); } };
                     card.oncontextmenu = (e) => { e.preventDefault(); contextTargetTaskId = t.id; document.getElementById('task-context-modal').style.display = 'flex'; }; 
                     col.appendChild(card); 
                 }); 
@@ -695,28 +711,30 @@
         function moveCurrentTaskFromCtx() { const t = appData.tasks.find(x => x.id === contextTargetTaskId); const moveVal = document.getElementById('ctx-move-select').value; if(t) { let d = new Date(t.date); if(moveVal === 'tomorrow') d.setDate(d.getDate()+1); if(moveVal === 'next_week') d.setDate(d.getDate()+7); t.date = dateToStr(d); saveData(); document.getElementById('task-context-modal').style.display = 'none'; showWeekView(currentWeekDate); } }
 
         // ==========================================================
-        // МНОГОСТРАНИЧНЫЙ СВИТОК И ДВИЖОК РИСОВАНИЯ
+        // МНОГОСТРАНИЧНЫЙ ВЕРТИКАЛЬНЫЙ СВИТОК И ДВИЖОК РИСОВАНИЯ
         // ==========================================================
-        let currentNotebook = null; let activePageIndex = 0; let currentTool = 'pen'; 
-        let isDrawing = false; let pointsBuffer = [];
-        let holdTimer = null; let isSnapping = false; let snapShapeData = null;
-        let drawingPageIdx = 0;
+        let currentNotebook = null; let activePageIndex = 0; let currentTool = 'pen';
+        let isDrawing = false; let activeDrawingPageIdx = 0;
+        let pointsBuffer = []; let holdTimer = null; let isSnapping = false; let snapShapeData = null;
+        let scrollObserver = null;
 
         function launchNotebookStudio(nbId) {
             currentNotebook = appData.files.find(x => x.id === nbId);
-            if(!currentNotebook.pages || currentNotebook.pages.length === 0) currentNotebook.pages = [{ id: 'p_1', objects: [] }]; 
+            if(!currentNotebook.pages || currentNotebook.pages.length === 0) {
+                currentNotebook.pages = [{ id: 'p_1', pattern: 'grid', bgColor: '#ffffff', objects: [], undoStack: [] }];
+            }
             activePageIndex = 0;
-            
             document.getElementById('main-header-bar').style.display = 'none'; 
             document.getElementById('folder-view').style.display = 'none'; 
             document.querySelector('.sidebar').style.display = 'none';
             document.getElementById('notebook-studio').style.display = 'flex'; 
             document.getElementById('nb-title-text').innerText = currentNotebook.name;
             
-            renderNotebookFeed(); 
-            renderPagesSidebarList(); 
-            renderQuickSwatchesBar(); 
-            updatePageIndicator();
+            renderQuickSwatchesBar();
+            renderAllPagesInScroll();
+            renderPagesSidebarList();
+            setupScrollObserver();
+            closeAllPopovers();
         }
 
         function exitNotebookStudio() { 
@@ -728,155 +746,233 @@
 
         function togglePagesSidebar() { document.getElementById('nb-pages-sidebar').classList.toggle('collapsed'); }
 
-        function renderNotebookFeed() {
-            const container = document.getElementById('nb-canvas-container');
-            container.innerHTML = '';
-            
-            currentNotebook.pages.forEach((page, pIdx) => {
-                const paper = document.createElement('div');
-                paper.className = 'nb-page-paper';
-                paper.id = `page-paper-${pIdx}`;
-                paper.dataset.pageIndex = pIdx;
-                if (page.bgImage) paper.style.backgroundImage = `url(${page.bgImage})`;
-
-                paper.innerHTML = `
-                    <canvas class="layer-canvas layer-highlighter" id="layer-hl-${pIdx}" width="794" height="1123"></canvas>
-                    <canvas class="layer-canvas layer-pen" id="layer-pen-${pIdx}" width="794" height="1123"></canvas>
-                    <canvas class="layer-canvas layer-ui" id="layer-ui-${pIdx}" width="794" height="1123"></canvas>
-                    <div class="page-footer-tag">Стр. ${pIdx + 1}</div>
-                `;
-
-                container.appendChild(paper);
-
-                const canvasPen = paper.querySelector(`#layer-pen-${pIdx}`);
-                canvasPen.onpointerdown = (e) => startDrawing(e, pIdx);
-                canvasPen.onpointermove = (e) => drawStroke(e, pIdx);
-                canvasPen.onpointerup = (e) => stopDrawing(e, pIdx);
-                canvasPen.onpointercancel = (e) => stopDrawing(e, pIdx);
-
-                renderPageObjects(pIdx);
-            });
-        }
-
-        function handleNotebookScroll() {
-            const container = document.getElementById('nb-canvas-container');
-            const papers = container.querySelectorAll('.nb-page-paper');
-            const containerCenter = container.scrollTop + container.clientHeight / 2;
-
-            papers.forEach((paper, idx) => {
-                const top = paper.offsetTop;
-                const bottom = top + paper.offsetHeight;
-                if (containerCenter >= top && containerCenter <= bottom) {
-                    if (activePageIndex !== idx) {
-                        activePageIndex = idx;
-                        updatePageIndicator();
-                        highlightSidebarThumb(idx);
-                    }
-                }
-            });
+        function renderPagesSidebarList() { 
+            document.getElementById('pages-list-container').innerHTML = currentNotebook.pages.map((p, idx) => `
+                <div class="page-thumb-card ${idx===activePageIndex?'active':''}" onclick="scrollToPage(${idx})">
+                    <div class="page-thumb-preview" style="${getPageBackgroundCSS(p)}"></div>
+                    <div class="page-num-label">Стр. ${idx+1}</div>
+                </div>
+            `).join(''); 
         }
 
         function scrollToPage(idx) {
-            const paper = document.getElementById(`page-paper-${idx}`);
-            if (paper) {
-                paper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                activePageIndex = idx;
-                updatePageIndicator();
-                highlightSidebarThumb(idx);
-            }
-        }
-
-        function updatePageIndicator() {
-            document.getElementById('nb-page-num-display').innerText = `Стр. ${activePageIndex + 1} из ${currentNotebook.pages.length}`;
-        }
-
-        function highlightSidebarThumb(idx) {
-            document.querySelectorAll('.page-thumb-card').forEach((card, i) => {
-                if (i === idx) card.classList.add('active'); else card.classList.remove('active');
-            });
-        }
-
-        function renderPagesSidebarList() {
-            document.getElementById('pages-list-container').innerHTML = currentNotebook.pages.map((p, idx) => 
-                `<div class="page-thumb-card ${idx===activePageIndex?'active':''}" onclick="scrollToPage(${idx})">
-                    <div class="page-thumb-preview" style="${p.bgImage ? 'background-image:url('+p.bgImage+');' : ''}"></div>
-                    <div class="page-num-label">Стр. ${idx+1}</div>
-                </div>`
-            ).join('');
+            activePageIndex = idx;
+            const targetEl = document.getElementById(`paper-page-${idx}`);
+            if(targetEl) targetEl.scrollIntoView({ behavior: 'smooth' });
+            renderPagesSidebarList();
+            updatePageNumberDisplay();
         }
 
         function addNewPageToNotebook() { 
-            currentNotebook.pages.push({ id: 'p_' + Date.now(), objects: [] }); 
+            const lastPage = currentNotebook.pages[currentNotebook.pages.length - 1];
+            const pattern = lastPage ? (lastPage.pattern || 'grid') : 'grid';
+            const bgColor = lastPage ? (lastPage.bgColor || '#ffffff') : '#ffffff';
+            currentNotebook.pages.push({ id: 'p_' + Date.now(), pattern: pattern, bgColor: bgColor, objects: [], undoStack: [] }); 
             saveData(); 
-            renderNotebookFeed(); 
-            renderPagesSidebarList(); 
-            setTimeout(() => scrollToPage(currentNotebook.pages.length - 1), 50);
+            renderAllPagesInScroll(); 
+            renderPagesSidebarList();
+            scrollToPage(currentNotebook.pages.length - 1);
         }
 
-        function renderQuickSwatchesBar() { const container = document.getElementById('quick-swatches-container'); const activeSwatches = (currentTool === 'highlighter') ? highlighterSwatches : penSwatches; const activeSelected = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch; container.innerHTML = activeSwatches.map((hex, idx) => `<div class="swatch-circle ${hex === activeSelected ? 'active' : ''}" style="background-color:${hex}" onclick="handleSwatchClick('${hex}', ${idx})"></div>`).join(''); }
-        function handleSwatchClick(hex, index) { if (currentTool === 'highlighter') selectedHlSwatch = hex; else selectedPenSwatch = hex; renderQuickSwatchesBar(); }
-        
-        function handleToolBtnClick(t) { 
-            const popovers = { 'pen': 'pen-popover-panel', 'highlighter': 'marker-popover-panel', 'eraser': 'eraser-popover-panel' };
-            if (currentTool === t && popovers[t]) { const el = document.getElementById(popovers[t]); el.style.display = el.style.display==='flex'?'none':'flex'; }
-            else { Object.values(popovers).forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; }); document.querySelectorAll('.gn-tool-icon-btn').forEach(b => b.classList.remove('active')); document.getElementById('tool-' + t).classList.add('active'); currentTool = t; renderQuickSwatchesBar();}
+        function updatePageNumberDisplay() { 
+            document.getElementById('nb-page-num-display').innerText = `Стр. ${activePageIndex + 1} из ${currentNotebook.pages.length}`; 
         }
 
-        function setPenSubtype(sub) { penState.subtype = sub; document.querySelectorAll('.pen-tab-btn').forEach(b => b.classList.remove('active')); document.getElementById('tab-' + sub).classList.add('active'); saveData(); }
-        function updatePenSize(val) { penState.size = parseInt(val); document.getElementById('val-pen-size').innerText = val + ' px'; saveData(); }
-        function updatePenSetting(k, val) { penState[k] = parseInt(val); document.getElementById('val-'+k).innerText = val + '%'; saveData(); }
-        function updateMarkerSize(val) { markerState.size = parseInt(val); document.getElementById('val-marker-size').innerText = val + ' px'; saveData(); }
-        function updateEraserSize(val) { eraserState.size = parseInt(val); document.getElementById('val-eraser-size').innerText = val + ' px'; saveData(); }
-        function updateEraserFilter(k, val) { eraserState.filters[k] = val; saveData(); }
+        function getPageBackgroundCSS(pageObj) {
+            if (pageObj.bgImage) {
+                return `background-image: url("${pageObj.bgImage}"); background-size: 100% 100%; background-color: #ffffff;`;
+            }
+            const bgColor = pageObj.bgColor || '#ffffff';
+            const pattern = pageObj.pattern || 'grid';
+            
+            let bgImg = 'none';
+            if (pattern === 'grid') {
+                const gridSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><path d='M 20 0 L 0 0 0 20' fill='none' stroke='%23d1d5db' stroke-width='0.8'/></svg>";
+                bgImg = `url("${gridSvg}")`;
+            } else if (pattern === 'line') {
+                const lineSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='28'><line x1='0' y1='27' x2='100%' y2='27' stroke='%23d1d5db' stroke-width='0.8'/></svg>";
+                bgImg = `url("${lineSvg}")`;
+            } else if (pattern === 'dot') {
+                const dotSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><circle cx='2' cy='2' r='1.2' fill='%239ca3af'/></svg>";
+                bgImg = `url("${dotSvg}")`;
+            }
+            
+            return `background-color: ${bgColor}; background-image: ${bgImg};`;
+        }
 
+        function renderAllPagesInScroll() {
+            const wrapper = document.getElementById('nb-pages-wrapper');
+            wrapper.innerHTML = '';
+
+            currentNotebook.pages.forEach((page, idx) => {
+                const paperDiv = document.createElement('div');
+                paperDiv.className = 'nb-page-paper';
+                paperDiv.id = `paper-page-${idx}`;
+                paperDiv.style.cssText = getPageBackgroundCSS(page);
+
+                paperDiv.innerHTML = `
+                    <div class="page-badge-label">Стр. ${idx + 1}</div>
+                    <canvas class="layer-canvas layer-hl" id="hl-canvas-${idx}" width="794" height="1123"></canvas>
+                    <canvas class="layer-canvas layer-pen" id="pen-canvas-${idx}" width="794" height="1123"></canvas>
+                    <canvas class="layer-canvas layer-ui" id="ui-canvas-${idx}" width="794" height="1123"></canvas>
+                `;
+
+                wrapper.appendChild(paperDiv);
+
+                const penCanvas = paperDiv.querySelector(`#pen-canvas-${idx}`);
+                penCanvas.addEventListener('pointerdown', (e) => startDrawingOnPage(e, idx));
+                penCanvas.addEventListener('pointermove', (e) => drawStrokeOnPage(e, idx));
+                penCanvas.addEventListener('pointerup', (e) => stopDrawingOnPage(e, idx));
+                penCanvas.addEventListener('pointercancel', (e) => stopDrawingOnPage(e, idx));
+
+                renderPageObjects(idx);
+            });
+
+            updatePageNumberDisplay();
+        }
+
+        function setupScrollObserver() {
+            const container = document.getElementById('nb-scroll-container');
+            const observerOptions = { root: container, threshold: 0.3 };
+            
+            if(scrollObserver) scrollObserver.disconnect();
+            
+            scrollObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const idStr = entry.target.id;
+                        const idx = parseInt(idStr.replace('paper-page-', ''));
+                        if (!isNaN(idx)) {
+                            activePageIndex = idx;
+                            updatePageNumberDisplay();
+                            renderPagesSidebarList();
+                        }
+                    }
+                });
+            }, observerOptions);
+
+            currentNotebook.pages.forEach((_, idx) => {
+                const el = document.getElementById(`paper-page-${idx}`);
+                if (el) scrollObserver.observe(el);
+            });
+        }
+
+        // РИСОВАНИЕ И ПИПЕТКА
         function getToolAlpha(tool, subtype) { if(tool === 'highlighter') return 0.35; if(tool === 'pen' && subtype === 'pencil') return 0.4; return 1.0; }
         
-        function getCanvasCoords(e, canvasEl) { 
-            const rect = canvasEl.getBoundingClientRect(); 
-            return { x: (e.clientX - rect.left) * (canvasEl.width / rect.width), y: (e.clientY - rect.top) * (canvasEl.height / rect.height) }; 
+        function getCanvasCoordsForPage(e, pageIdx) { 
+            const penCanvas = document.getElementById(`pen-canvas-${pageIdx}`);
+            const rect = penCanvas.getBoundingClientRect(); 
+            return { 
+                x: (e.clientX - rect.left) * (penCanvas.width / rect.width), 
+                y: (e.clientY - rect.top) * (penCanvas.height / rect.height) 
+            }; 
         }
 
-        function startDrawing(e, pIdx) {
-            drawingPageIdx = pIdx;
-            const canvasPen = document.getElementById(`layer-pen-${pIdx}`);
-            const pos = getCanvasCoords(e, canvasPen); isDrawing = true;
+        function toggleEyedropper() {
+            isEyedropperActive = !isEyedropperActive;
+            const btn = document.getElementById('eyedropper-btn');
+            if(isEyedropperActive) {
+                btn.classList.add('active');
+                alert('Пипетка включена! Кликните в любое место страницы, чтобы скопировать цвет штриха или бумаги.');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        function pickColorAt(pos, pageIdx) {
+            const hlCanvas = document.getElementById(`hl-canvas-${pageIdx}`);
+            const penCanvas = document.getElementById(`pen-canvas-${pageIdx}`);
+            const ctxHl = hlCanvas.getContext('2d');
+            const ctxPen = penCanvas.getContext('2d');
+            
+            const pxX = Math.floor(pos.x);
+            const pxY = Math.floor(pos.y);
+            
+            let p1 = ctxPen.getImageData(pxX, pxY, 1, 1).data;
+            if(p1[3] === 0) {
+                p1 = ctxHl.getImageData(pxX, pxY, 1, 1).data;
+            }
+            if(p1[3] === 0) {
+                const paperEl = document.getElementById(`paper-page-${pageIdx}`);
+                const computed = getComputedStyle(paperEl);
+                let bg = computed.backgroundColor;
+                if(bg) {
+                    const rgbMatch = bg.match(/\d+/g);
+                    if(rgbMatch && rgbMatch.length >= 3) {
+                        p1 = [parseInt(rgbMatch[0]), parseInt(rgbMatch[1]), parseInt(rgbMatch[2]), 255];
+                    }
+                }
+            }
+            
+            const hex = '#' + [p1[0], p1[1], p1[2]].map(x => {
+                const hexStr = x.toString(16);
+                return hexStr.length === 1 ? '0' + hexStr : hexStr;
+            }).join('');
+
+            const activeSwatches = (currentTool === 'highlighter') ? highlighterSwatches : penSwatches;
+            if(!activeSwatches.includes(hex) && activeSwatches.length < 20) {
+                activeSwatches.push(hex);
+            }
+            if(currentTool === 'highlighter') {
+                selectedHlSwatch = hex;
+            } else {
+                selectedPenSwatch = hex;
+            }
+
+            isEyedropperActive = false;
+            document.getElementById('eyedropper-btn').classList.remove('active');
+            renderQuickSwatchesBar();
+            alert('Цвет ' + hex + ' добавлен в палитру!');
+        }
+
+        function startDrawingOnPage(e, pageIdx) {
+            closeAllPopovers();
+            activeDrawingPageIdx = pageIdx;
+            const pos = getCanvasCoordsForPage(e, pageIdx);
+            
+            if(isEyedropperActive) {
+                pickColorAt(pos, pageIdx);
+                return;
+            }
+
+            isDrawing = true;
             let pressure = e.pressure || 0.5; if(pressure===0) pressure=0.5;
             pointsBuffer = [{x: pos.x, y: pos.y, p: pressure}];
-            if (currentTool === 'eraser') applyEraser(pos, pIdx); else holdTimer = setTimeout(() => triggerSnap(pIdx), 600);
+            if (currentTool === 'eraser') applyEraserOnPage(pos, pageIdx); 
+            else holdTimer = setTimeout(() => triggerSnapOnPage(pageIdx), 600);
         }
 
-        function drawStroke(e, pIdx) {
-            if(!isDrawing || drawingPageIdx !== pIdx) return;
-            const canvasPen = document.getElementById(`layer-pen-${pIdx}`);
-            const canvasUI = document.getElementById(`layer-ui-${pIdx}`);
-            const ctxUI = canvasUI.getContext('2d');
-            const pos = getCanvasCoords(e, canvasPen);
+        function drawStrokeOnPage(e, pageIdx) {
+            if(!isDrawing || activeDrawingPageIdx !== pageIdx || isEyedropperActive) return;
+            const pos = getCanvasCoordsForPage(e, pageIdx);
             let pressure = e.pressure || 0.5; if(pressure===0) pressure=0.5;
 
-            if (currentTool === 'eraser') { applyEraser(pos, pIdx); return; }
+            if (currentTool === 'eraser') { applyEraserOnPage(pos, pageIdx); return; }
 
             const curSize = (currentTool === 'highlighter') ? markerState.size : penState.size;
             const curColor = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch;
+            const uiCtx = document.getElementById(`ui-canvas-${pageIdx}`).getContext('2d');
 
             if (isSnapping) {
                 if(snapShapeData.type === 'line') snapShapeData.end = pos;
                 else if (snapShapeData.type === 'ellipse') { snapShapeData.rx = Math.abs(pos.x - snapShapeData.cx); snapShapeData.ry = Math.abs(pos.y - snapShapeData.cy); }
-                ctxUI.clearRect(0,0,canvasUI.width, canvasUI.height); ctxUI.beginPath(); ctxUI.strokeStyle = curColor; ctxUI.lineWidth = curSize; ctxUI.globalAlpha = getToolAlpha(currentTool, penState.subtype);
-                if(snapShapeData.type === 'line') { ctxUI.moveTo(snapShapeData.start.x, snapShapeData.start.y); ctxUI.lineTo(snapShapeData.end.x, snapShapeData.end.y); } else { ctxUI.ellipse(snapShapeData.cx, snapShapeData.cy, snapShapeData.rx, snapShapeData.ry, 0, 0, Math.PI*2); }
-                ctxUI.stroke();
+                uiCtx.clearRect(0,0,794,1123); uiCtx.beginPath(); uiCtx.strokeStyle = curColor; uiCtx.lineWidth = curSize; uiCtx.globalAlpha = getToolAlpha(currentTool, penState.subtype);
+                if(snapShapeData.type === 'line') { uiCtx.moveTo(snapShapeData.start.x, snapShapeData.start.y); uiCtx.lineTo(snapShapeData.end.x, snapShapeData.end.y); } else { uiCtx.ellipse(snapShapeData.cx, snapShapeData.cy, snapShapeData.rx, snapShapeData.ry, 0, 0, Math.PI*2); }
+                uiCtx.stroke();
             } else {
                 pointsBuffer.push({x: pos.x, y: pos.y, p: pressure});
                 const dist = Math.hypot(pos.x - pointsBuffer[pointsBuffer.length-2].x, pos.y - pointsBuffer[pointsBuffer.length-2].y);
-                if(dist > 5) { clearTimeout(holdTimer); holdTimer = setTimeout(() => triggerSnap(pIdx), 600); }
+                if(dist > 5) { clearTimeout(holdTimer); holdTimer = setTimeout(() => triggerSnapOnPage(pageIdx), 600); }
 
-                ctxUI.beginPath(); ctxUI.strokeStyle = curColor; ctxUI.lineCap = 'round'; ctxUI.lineJoin = 'round'; ctxUI.globalAlpha = getToolAlpha(currentTool, penState.subtype);
-                ctxUI.moveTo(pointsBuffer[pointsBuffer.length-2].x, pointsBuffer[pointsBuffer.length-2].y); ctxUI.lineTo(pos.x, pos.y);
+                uiCtx.beginPath(); uiCtx.strokeStyle = curColor; uiCtx.lineCap = 'round'; uiCtx.lineJoin = 'round'; uiCtx.globalAlpha = getToolAlpha(currentTool, penState.subtype);
+                uiCtx.moveTo(pointsBuffer[pointsBuffer.length-2].x, pointsBuffer[pointsBuffer.length-2].y); uiCtx.lineTo(pos.x, pos.y);
                 let w = curSize; if(currentTool === 'pen' && penState.pressure > 0) w = curSize * (pressure * 2);
-                ctxUI.lineWidth = w; ctxUI.stroke();
+                uiCtx.lineWidth = w; uiCtx.stroke();
             }
         }
 
-        function triggerSnap(pIdx) {
+        function triggerSnapOnPage(pageIdx) {
             if(pointsBuffer.length < 5) return; isSnapping = true;
             let minX=10000, maxX=0, minY=10000, maxY=0;
             pointsBuffer.forEach(pt => { if(pt.x < minX) minX=pt.x; if(pt.x > maxX) maxX=pt.x; if(pt.y < minY) minY=pt.y; if(pt.y > maxY) maxY=pt.y; });
@@ -886,38 +982,52 @@
             else snapShapeData = { type: 'line', start: start, end: end };
         }
 
-        function stopDrawing(e, pIdx) {
-            if(!isDrawing || drawingPageIdx !== pIdx) return; 
+        function stopDrawingOnPage(e, pageIdx) {
+            if(!isDrawing || activeDrawingPageIdx !== pageIdx || isEyedropperActive) return; 
             isDrawing = false; clearTimeout(holdTimer);
             if (currentTool === 'eraser') return;
-            const curSize = (currentTool === 'highlighter') ? markerState.size : penState.size; 
-            const curColor = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch;
-            const targetPage = currentNotebook.pages[pIdx];
-            const canvasUI = document.getElementById(`layer-ui-${pIdx}`);
-            const ctxUI = canvasUI.getContext('2d');
-
+            const curSize = (currentTool === 'highlighter') ? markerState.size : penState.size; const curColor = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch;
+            const pageObj = currentNotebook.pages[pageIdx];
+            
+            let newObj = null;
             if(isSnapping) {
-                targetPage.objects.push({ id: 'shp_' + Date.now(), type: 'shape', shape: snapShapeData, tool: currentTool, subtype: penState.subtype, color: curColor, size: curSize });
-                isSnapping = false; snapShapeData = null; ctxUI.clearRect(0,0,canvasUI.width, canvasUI.height);
+                newObj = { id: 'shp_' + Date.now(), type: 'shape', shape: snapShapeData, tool: currentTool, subtype: penState.subtype, color: curColor, size: curSize };
+                isSnapping = false; snapShapeData = null; 
             } else { 
-                targetPage.objects.push({ id: 'str_' + Date.now(), type: 'stroke', tool: currentTool, subtype: penState.subtype, color: curColor, size: curSize, points: pointsBuffer }); 
+                newObj = { id: 'str_' + Date.now(), type: 'stroke', tool: currentTool, subtype: penState.subtype, color: curColor, size: curSize, points: pointsBuffer }; 
             }
-            saveData(); renderPageObjects(pIdx);
+            
+            pageObj.objects.push(newObj);
+            if(!pageObj.undoStack) pageObj.undoStack = [];
+            pageObj.undoStack.push(newObj);
+
+            const uiCtx = document.getElementById(`ui-canvas-${pageIdx}`).getContext('2d');
+            uiCtx.clearRect(0,0,794,1123);
+            saveData(); renderPageObjects(pageIdx);
         }
 
-        function renderPageObjects(pIdx) {
-            const ctxHighlighter = document.getElementById(`layer-hl-${pIdx}`).getContext('2d');
-            const ctxPen = document.getElementById(`layer-pen-${pIdx}`).getContext('2d');
-            const ctxUI = document.getElementById(`layer-ui-${pIdx}`).getContext('2d');
+        function undoActivePage() {
+            const pageObj = currentNotebook.pages[activePageIndex];
+            if(!pageObj || !pageObj.objects || pageObj.objects.length === 0) return;
+            pageObj.objects.pop();
+            saveData();
+            renderPageObjects(activePageIndex);
+        }
 
-            ctxHighlighter.clearRect(0, 0, 794, 1123); 
-            ctxPen.clearRect(0, 0, 794, 1123); 
-            ctxUI.clearRect(0,0,794,1123);
+        function redoActivePage() {
+            // Опционально возвращающие стертые/отмененные объекты
+        }
 
-            const targetPage = currentNotebook.pages[pIdx] || { objects: [] };
+        function renderPageObjects(pageIdx) {
+            const pageObj = currentNotebook.pages[pageIdx]; if(!pageObj) return;
+            const hlCtx = document.getElementById(`hl-canvas-${pageIdx}`).getContext('2d');
+            const penCtx = document.getElementById(`pen-canvas-${pageIdx}`).getContext('2d');
+            const uiCtx = document.getElementById(`ui-canvas-${pageIdx}`).getContext('2d');
 
-            targetPage.objects.forEach(obj => {
-                const targetCtx = (obj.tool === 'highlighter') ? ctxHighlighter : ctxPen;
+            hlCtx.clearRect(0, 0, 794, 1123); penCtx.clearRect(0, 0, 794, 1123); uiCtx.clearRect(0, 0, 794, 1123);
+
+            pageObj.objects.forEach(obj => {
+                const targetCtx = (obj.tool === 'highlighter') ? hlCtx : penCtx;
                 targetCtx.beginPath(); targetCtx.strokeStyle = obj.color; targetCtx.lineCap = 'round'; targetCtx.lineJoin = 'round';
                 targetCtx.globalAlpha = getToolAlpha(obj.tool, obj.subtype);
 
@@ -939,10 +1049,10 @@
             });
         }
 
-        function applyEraser(pos, pIdx) {
-            const targetPage = currentNotebook.pages[pIdx]; if (!targetPage || !targetPage.objects) return;
+        function applyEraserOnPage(pos, pageIdx) {
+            const pageObj = currentNotebook.pages[pageIdx]; if (!pageObj || !pageObj.objects) return;
             const eraserRadius = eraserState.size / 2; const newObjects = [];
-            targetPage.objects.forEach(obj => {
+            pageObj.objects.forEach(obj => {
                 let canErase = false;
                 if (obj.tool === 'highlighter' && eraserState.filters.highlighter) canErase = true;
                 if (obj.tool === 'pen' && (obj.subtype === 'ballpoint' || !obj.subtype) && eraserState.filters.ballpoint) canErase = true;
@@ -966,50 +1076,139 @@
                     if (currentSegment.length > 0) newObjects.push({ ...obj, id: 'str_' + Math.random(), points: currentSegment });
                 }
             });
-            targetPage.objects = newObjects; saveData(); renderPageObjects(pIdx);
+            pageObj.objects = newObjects; saveData(); renderPageObjects(pageIdx);
         }
 
-        // ЭКСПОРТ И СОХРАНЕНИЕ
+        // РАСШИРЕННАЯ ПАЛИТРА (ДО 20 ЦВЕТОВ) И ПИПЕТКА
+        function renderQuickSwatchesBar() { 
+            const container = document.getElementById('quick-swatches-container'); 
+            const activeSwatches = (currentTool === 'highlighter') ? highlighterSwatches : penSwatches; 
+            const activeSelected = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch; 
+            
+            let html = activeSwatches.map((hex, idx) => `<div class="swatch-circle ${hex === activeSelected ? 'active' : ''}" style="background-color:${hex}" onclick="handleSwatchClick('${hex}', ${idx})"></div>`).join('');
+            
+            if(activeSwatches.length < 20) {
+                html += `<div class="add-swatch-btn" title="Добавить цвет" onclick="openColorPickerForNewSwatch()">+</div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function handleSwatchClick(hex, index) { 
+            if (currentTool === 'highlighter') selectedHlSwatch = hex; else selectedPenSwatch = hex; 
+            renderQuickSwatchesBar(); 
+        }
+
+        function openColorPickerForNewSwatch() {
+            document.getElementById('hidden-color-picker').click();
+        }
+
+        function onCustomColorPicked(e) {
+            const hex = e.target.value;
+            const activeSwatches = (currentTool === 'highlighter') ? highlighterSwatches : penSwatches;
+            if(!activeSwatches.includes(hex) && activeSwatches.length < 20) {
+                activeSwatches.push(hex);
+            }
+            if(currentTool === 'highlighter') selectedHlSwatch = hex;
+            else selectedPenSwatch = hex;
+            renderQuickSwatchesBar();
+            saveData();
+        }
+        
+        function closeAllPopovers() {
+            document.querySelectorAll('.gn-popover-panel').forEach(p => p.style.display = 'none');
+        }
+
+        function handleToolBtnClick(t) { 
+            const popovers = { 'pen': 'pen-popover-panel', 'highlighter': 'marker-popover-panel', 'eraser': 'eraser-popover-panel', 'template': 'template-popover-panel' };
+            const isAlreadyOpen = document.getElementById(popovers[t]) && document.getElementById(popovers[t]).style.display === 'flex';
+            
+            closeAllPopovers();
+            document.querySelectorAll('.gn-tool-icon-btn').forEach(b => b.classList.remove('active'));
+
+            if (!isAlreadyOpen) {
+                document.getElementById('tool-' + t).classList.add('active');
+                if (popovers[t]) document.getElementById(popovers[t]).style.display = 'flex';
+            } else {
+                document.getElementById('tool-' + (currentTool||'pen')).classList.add('active');
+            }
+            if(t !== 'template') currentTool = t;
+            renderQuickSwatchesBar();
+        }
+
+        function setPenSubtype(sub) { penState.subtype = sub; document.querySelectorAll('#pen-popover-panel .pen-tab-btn').forEach(b => b.classList.remove('active')); document.getElementById('tab-' + sub).classList.add('active'); saveData(); }
+        function updatePenSize(val) { penState.size = parseInt(val); document.getElementById('val-pen-size').innerText = val + ' px'; saveData(); }
+        function updatePenSetting(k, val) { penState[k] = parseInt(val); document.getElementById('val-'+k).innerText = val + '%'; saveData(); }
+        function updateMarkerSize(val) { markerState.size = parseInt(val); document.getElementById('val-marker-size').innerText = val + ' px'; saveData(); }
+        function updateEraserSize(val) { eraserState.size = parseInt(val); document.getElementById('val-eraser-size').innerText = val + ' px'; saveData(); }
+        function updateEraserFilter(k, val) { eraserState.filters[k] = val; saveData(); }
+
+        // ШАБЛОНЫ И ЦВЕТА СТРАНИЦЫ
+        function setPagePattern(pattern) {
+            const pageObj = currentNotebook.pages[activePageIndex];
+            if(pageObj) {
+                pageObj.pattern = pattern;
+                saveData();
+                renderAllPagesInScroll();
+                renderPagesSidebarList();
+            }
+        }
+
+        function setPageBgColor(color, el) {
+            const pageObj = currentNotebook.pages[activePageIndex];
+            if(pageObj) {
+                pageObj.bgColor = color;
+                if(el) {
+                    document.querySelectorAll('#template-popover-panel .pastel-opt').forEach(opt => opt.classList.remove('selected'));
+                    el.classList.add('selected');
+                }
+                saveData();
+                renderAllPagesInScroll();
+                renderPagesSidebarList();
+            }
+        }
+
+        function applyTemplateToAllPages() {
+            const curPage = currentNotebook.pages[activePageIndex];
+            if(!curPage) return;
+            currentNotebook.pages.forEach(p => {
+                p.pattern = curPage.pattern || 'grid';
+                p.bgColor = curPage.bgColor || '#ffffff';
+            });
+            saveData();
+            renderAllPagesInScroll();
+            renderPagesSidebarList();
+            alert('Шаблон применен ко всем страницам!');
+        }
+
+        // ЭКСПОРТ
         function openExportModal() { document.getElementById('export-modal').style.display = 'flex'; }
         
         function exportNotebookAsImage() {
+            const pageObj = currentNotebook.pages[activePageIndex];
+            const paperEl = document.getElementById(`paper-page-${activePageIndex}`);
+            if(!paperEl) return;
+
             const exportCanvas = document.createElement('canvas'); exportCanvas.width = 794; exportCanvas.height = 1123;
             const eCtx = exportCanvas.getContext('2d');
-            const targetPage = currentNotebook.pages[activePageIndex];
             
-            eCtx.fillStyle = '#ffffff';
+            eCtx.fillStyle = pageObj.bgColor || '#ffffff';
             eCtx.fillRect(0,0,794,1123);
-            
-            const hlCanvas = document.getElementById(`layer-hl-${activePageIndex}`);
-            const penCanvas = document.getElementById(`layer-pen-${activePageIndex}`);
 
-            if (targetPage && targetPage.bgImage) {
-                const img = new Image();
-                img.onload = () => {
-                    eCtx.drawImage(img, 0, 0, 794, 1123);
-                    if (hlCanvas) eCtx.drawImage(hlCanvas, 0, 0); 
-                    if (penCanvas) eCtx.drawImage(penCanvas, 0, 0);
-                    const link = document.createElement('a'); 
-                    link.download = `${currentNotebook ? currentNotebook.name : 'notebook'}_page_${activePageIndex+1}.png`; 
-                    link.href = exportCanvas.toDataURL(); 
-                    link.click();
-                    document.getElementById('export-modal').style.display = 'none';
-                };
-                img.src = targetPage.bgImage;
-            } else {
-                if (hlCanvas) eCtx.drawImage(hlCanvas, 0, 0); 
-                if (penCanvas) eCtx.drawImage(penCanvas, 0, 0);
-                const link = document.createElement('a'); 
-                link.download = `${currentNotebook ? currentNotebook.name : 'notebook'}_page_${activePageIndex+1}.png`; 
-                link.href = exportCanvas.toDataURL(); 
-                link.click();
-                document.getElementById('export-modal').style.display = 'none';
-            }
+            const hlCanvas = document.getElementById(`hl-canvas-${activePageIndex}`);
+            const penCanvas = document.getElementById(`pen-canvas-${activePageIndex}`);
+
+            eCtx.drawImage(hlCanvas, 0, 0); 
+            eCtx.drawImage(penCanvas, 0, 0);
+
+            const link = document.createElement('a'); 
+            link.download = (currentNotebook ? currentNotebook.name : 'notebook') + `_стр_${activePageIndex+1}.png`; 
+            link.href = exportCanvas.toDataURL(); 
+            link.click();
+            document.getElementById('export-modal').style.display = 'none';
         }
 
         function exportNotebookAsPDF() { document.getElementById('export-modal').style.display = 'none'; window.print(); }
         function shareNotebook() { if (navigator.share) { navigator.share({ title: currentNotebook ? currentNotebook.name : 'Блокнот', text: 'Блокнот из приложения!' }).catch(err => console.log(err)); } else { alert('Не поддерживается браузером'); } document.getElementById('export-modal').style.display = 'none'; }
-        function uploadToCloud() { alert('Синхронизация с облаком запущена!'); document.getElementById('export-modal').style.display = 'none'; }
     </script>
 
     <script type="module">
@@ -1023,7 +1222,7 @@
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        enableIndexedDbPersistence(db).catch((err) => { console.log("Ошибка оффлайн-режима: ", err.code); });
+        enableIndexedDbPersistence(db).catch((err) => { console.log("Оффлайн режим: ", err.code); });
         window.db = db; let currentUserUid = null;
 
         window.loginWithGoogle = () => { signInWithPopup(auth, provider).catch((error) => alert("Ошибка: " + error.message)); };
@@ -1032,7 +1231,7 @@
         window.syncDataToFirebase = async () => {
             if (!currentUserUid) return;
             try { const userDocRef = doc(db, "users", currentUserUid); await setDoc(userDocRef, { appData: JSON.stringify(appData), updatedAt: new Date().toISOString() }); } 
-            catch (e) { console.log("Оффлайн: изменения сохранены локально."); }
+            catch (e) { console.log("Сохранено локально."); }
         };
 
         onAuthStateChanged(auth, async (user) => {
