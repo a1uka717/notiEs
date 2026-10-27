@@ -5,6 +5,9 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ffffff">
     <meta charset="UTF-8">
+    <!-- GOOGLE API Скрипты для синхронизации -->
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Мое расписание & GoodNotes Studio</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Quicksand:wght@400;600;700&family=Comfortaa:wght@400;600;700&family=Roboto:wght@400;500;700&family=Montserrat:wght@400;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
@@ -201,6 +204,9 @@
     <!-- САЙДБАР -->
     <div class="sidebar">
         <div class="sidebar-item" onclick="openSettings()"><span>⚙️</span> Настройки</div>
+        <!-- КНОПКИ АВТОРИЗАЦИИ GOOGLE ДИСКА -->
+        <div class="sidebar-item" id="google-auth-item" style="display:none;" onclick="handleAuthClick()"><span>☁️</span> <span id="auth-btn-text">Войти в Google</span></div>
+        <div class="sidebar-item" id="google-signout-item" style="display:none; color:#d32f2f;" onclick="handleSignoutClick()"><span>🚪</span> Выйти из Google</div>
         <div class="calendar-menu-block">
             <div class="sidebar-item active" id="menu-calendar" onclick="showMonthView()"><span>📅</span> Календарь</div>
         </div>
@@ -523,6 +529,67 @@
         let currentDate = new Date(); let currentWeekDate = null;
         let contextTargetFolderId = null; let contextTargetTaskId = null; let contextTargetNbId = null;
         let editingFolderId = null; let editingTaskId = null; let addingTaskToDate = null;
+
+// GOOGLE API СКРИПТЫ АВТОРИЗАЦИИ (Связь с config.js)
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+
+        function checkAuthButton() {
+            if (gapiInited && gisInited) {
+                document.getElementById('google-auth-item').style.display = 'flex';
+            }
+        }
+
+        function gapiLoaded() {
+            gapi.load('client', initializeGapiClient);
+        }
+
+        async function initializeGapiClient() {
+            await gapi.client.init({
+                apiKey: CONFIG.API_KEY,
+                discoveryDocs: CONFIG.DISCOVERY_DOCS,
+            });
+            gapiInited = true;
+            checkAuthButton();
+        }
+
+        function gisLoaded() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CONFIG.CLIENT_ID,
+                scope: CONFIG.SCOPES,
+                callback: '', // Определяется при вызове
+            });
+            gisInited = true;
+            checkAuthButton();
+        }
+
+        function handleAuthClick() {
+            tokenClient.callback = async (resp) => {
+                if (resp.error !== undefined) {
+                    throw (resp);
+                }
+                document.getElementById('google-auth-item').style.display = 'none';
+                document.getElementById('google-signout-item').style.display = 'flex';
+            };
+
+            if (gapi.client.getToken() === null) {
+                tokenClient.requestAccessToken({ prompt: 'consent' });
+            } else {
+                tokenClient.requestAccessToken({ prompt: '' });
+            }
+        }
+
+        function handleSignoutClick() {
+            const token = gapi.client.getToken();
+            if (token !== null) {
+                google.accounts.oauth2.revoke(token.access_token, () => {
+                    gapi.client.setToken('');
+                    document.getElementById('google-signout-item').style.display = 'none';
+                    document.getElementById('google-auth-item').style.display = 'flex';
+                });
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', () => { 
             if (appData.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); 
