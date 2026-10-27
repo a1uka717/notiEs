@@ -136,15 +136,35 @@
 
         /* ВЕРТИКАЛЬНЫЙ СВИТОК СТРАНИЦ */
         .nb-canvas-container { flex-grow: 1; overflow: auto; padding: 40px 20px; position: relative; touch-action: pan-x pan-y; }
-        .nb-pages-wrapper { display: flex; flex-direction: column; align-items: center; gap: 30px; margin: 0 auto; width: 794px; transform-origin: top center; transition: transform 0.1s ease-out; }
+        .nb-pages-wrapper { display: flex; flex-direction: column; align-items: center; gap: 30px; margin: 0 auto; width: 794px; transform-origin: top center; transition: transform 0.05s ease-out; }
         
-        .nb-page-paper { background-color: #ffffff; box-shadow: 0 8px 24px rgba(0,0,0,0.12); border-radius: 4px; position: relative; width: 794px; height: 1123px; border: 1px solid var(--border-color); flex-shrink: 0; background-repeat: repeat;}
+        .nb-page-paper { background-color: #ffffff; box-shadow: 0 8px 24px rgba(0,0,0,0.12); border-radius: 4px; position: relative; width: 794px; height: 1123px; border: 1px solid var(--border-color); flex-shrink: 0; background-repeat: repeat; overflow:hidden;}
         .page-badge-label { position: absolute; right: -50px; top: 10px; background: rgba(0,0,0,0.4); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; pointer-events: none;}
 
         canvas.layer-canvas { position: absolute; top: 0; left: 0; touch-action: none; border-radius: 4px;}
         .layer-hl { z-index: 1; }
         .layer-pen { z-index: 2; }
         .layer-ui { z-index: 3; pointer-events: none; }
+
+        /* МЕНЮ ЛАССО */
+        #lasso-floating-menu { display: none; position: fixed; background: var(--modal-bg); box-shadow: 0 8px 24px rgba(0,0,0,0.25); border-radius: 12px; padding: 6px; z-index: 2100; flex-wrap: wrap; gap: 6px; align-items: center; border: 1px solid var(--border-color); max-width: 320px; }
+        #lasso-floating-menu button { font-size: 12px; padding: 6px 10px; border-radius: 8px; border: none; background: var(--sidebar-bg); color: var(--text-main); font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: 0.1s;}
+        #lasso-floating-menu button:hover { background: var(--hover-bg); }
+        .lasso-scale-wrap { display: none; align-items: center; gap: 8px; width: 100%; padding: 4px; background: var(--sidebar-bg); border-radius: 8px; margin-top: 4px; }
+        .lasso-scale-wrap input { flex: 1; margin: 0; }
+        #lasso-color-wrap { display: none; flex-wrap: wrap; gap: 4px; width: 100%; padding: 4px; background: var(--sidebar-bg); border-radius: 8px; margin-top: 4px; justify-content: flex-start;}
+        
+        /* СТИКЕРЫ */
+        .stickers-modal-body { display: flex; height: 400px; gap: 16px; }
+        .stickers-sidebar { width: 140px; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 6px; padding-right: 10px; overflow-y: auto; }
+        .sticker-group-btn { padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: left; transition: 0.15s; color: var(--text-muted); }
+        .sticker-group-btn:hover { background: var(--hover-bg); color: var(--text-main); }
+        .sticker-group-btn.active { background: var(--hover-bg); color: var(--text-main); box-shadow: inset 2px 0 0 #2383e2; }
+        .stickers-grid { flex-grow: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; overflow-y: auto; align-content: flex-start; padding: 4px; }
+        .sticker-card { position: relative; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; text-align: center; background: var(--card-bg); cursor: pointer; }
+        .sticker-card:hover { border-color: #2383e2; }
+        .sticker-del-btn { position: absolute; top: -6px; right: -6px; background: #d32f2f; color: white; width: 20px; height: 20px; border-radius: 50%; font-size: 10px; font-weight: bold; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; }
+        .sticker-card:hover .sticker-del-btn { display: flex; }
 
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--modal-overlay); justify-content: center; align-items: center; z-index: 2000; }
         .modal { background-color: var(--modal-bg); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.18); overflow: hidden; position: relative; padding: 24px; max-height: 90vh; display: flex; flex-direction: column;}
@@ -174,8 +194,9 @@
     </style>
 </head>
 <body>
-
     <input type="file" id="pdf-file-input" accept="application/pdf" style="display:none;" onchange="handlePDFUpload(event)">
+    <input type="file" id="image-upload-input" accept="image/*" style="display:none;" onchange="handleImageUpload(event)">
+    <input type="file" id="sticker-upload-input" accept="image/*" style="display:none;" onchange="handleStickerUpload(event)">
 
     <!-- САЙДБАР -->
     <div class="sidebar">
@@ -244,12 +265,14 @@
                 <div class="nb-tools-bar" id="nb-tools-bar">
                     <button class="gn-tool-icon-btn active" id="tool-pen" onclick="handleToolBtnClick('pen')">✒️ Ручка</button>
                     <button class="gn-tool-icon-btn" id="tool-highlighter" onclick="handleToolBtnClick('highlighter')">🖍️ Маркер</button>
+                    <button class="gn-tool-icon-btn" id="tool-lasso" onclick="handleToolBtnClick('lasso')">🎯 Лассо</button>
                     <button class="gn-tool-icon-btn" id="tool-eraser" onclick="handleToolBtnClick('eraser')">🧹 Ластик</button>
+                    <button class="gn-tool-icon-btn" onclick="document.getElementById('image-upload-input').click()">🖼️ Изображение</button>
+                    <button class="gn-tool-icon-btn" id="tool-stickers" onclick="openStickersModal()">🏷️ Стикеры</button>
                     <button class="gn-tool-icon-btn" id="tool-template" onclick="handleToolBtnClick('template')">📄 Шаблон</button>
 
                     <span style="border-left:1px solid var(--border-color); height:20px; margin:0 4px;"></span>
                     
-                    <!-- КНОПКИ UNDO / REDO -->
                     <button class="gn-tool-icon-btn" onclick="undoAction()" title="Отменить штрих">↩️</button>
                     <button class="gn-tool-icon-btn" onclick="redoAction()" title="Вернуть штрих">↪️</button>
 
@@ -257,7 +280,8 @@
                     <div class="quick-swatches-bar" id="quick-swatches-container"></div>
                     <button class="gn-tool-icon-btn" onclick="openAddSwatchPrompt()" title="Добавить цвет">+</button>
                     <button class="gn-tool-icon-btn" id="tool-eyedropper" onclick="toggleEyedropper()" title="Пипетка">🧪</button>
-
+                    
+                    <!-- ПОПОВЕРЫ ОСТАВЛЕНЫ БЕЗ ИЗМЕНЕНИЙ -->
                     <!-- ПОПОВЕР РУЧКИ -->
                     <div class="gn-popover-panel" id="pen-popover-panel" onclick="event.stopPropagation()">
                         <div class="gn-popover-header">Настройки Ручки</div>
@@ -300,7 +324,7 @@
                         <div class="gn-switch-row"><span>Маркер</span><label class="gn-switch"><input type="checkbox" id="ef-highlighter" checked onchange="updateEraserFilter('highlighter', this.checked)"><span class="gn-slider-toggle"></span></label></div>
                     </div>
 
-                    <!-- ПОПОВЕР ШАБЛОНА И ЦВЕТА СТРАНИЦЫ -->
+                    <!-- ПОПОВЕР ШАБЛОНА -->
                     <div class="gn-popover-panel" id="template-popover-panel" onclick="event.stopPropagation()">
                         <div class="gn-popover-header">Настройки Листа</div>
                         <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Тип верстки:</div>
@@ -320,18 +344,62 @@
                         </div>
                         <button class="secondary-btn" style="width:100%; margin-top:6px; font-size:12px;" onclick="applyTemplateToAllPages()">Применить ко всем страницам</button>
                     </div>
-
                 </div>
 
                 <!-- КОНТЕЙНЕР БЕСКОНЕЧНОГО ВЕРТИКАЛЬНОГО СВИТКА -->
                 <div class="nb-canvas-container" id="nb-scroll-container">
                     <div class="nb-pages-wrapper" id="nb-pages-wrapper"></div>
                 </div>
+                
+                <!-- ПЛАВАЮЩЕЕ МЕНЮ ЛАССО -->
+                <div id="lasso-floating-menu" onclick="event.stopPropagation()">
+                    <button onclick="toggleLassoColor()">🎨 Цвет</button>
+                    <button onclick="toggleScaleSlider()">↔️ Размер</button>
+                    <button onclick="startCropMode()">✂️ Обрезать</button>
+                    <button onclick="removeBackgroundFromSelection()">🪄 Фон</button>
+                    <button onclick="saveSelectedAsSticker()">📌 Стикер</button>
+                    <button onclick="deleteSelectedObjects()" style="color:#d32f2f;">🗑️ Удалить</button>
+                    
+                    <div class="lasso-scale-wrap" id="lasso-scale-wrap">
+                        <span style="font-size:12px; font-weight:bold;">Масштаб:</span>
+                        <input type="range" id="lasso-scale-slider" min="0.2" max="3" step="0.1" value="1" oninput="applyScaleToSelection(this.value)">
+                        <button style="padding:2px 6px;" onclick="confirmScale()">OK</button>
+                    </div>
+                    
+                    <!-- ПАЛИТРА ДЛЯ ЛАССО -->
+                    <div id="lasso-color-wrap"></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- МОДАЛКИ -->
+    <!-- МОДАЛКА СТИКЕРОВ С ГРУППИРОВКОЙ И ЗАГРУЗКОЙ -->
+    <div class="modal-overlay" id="stickers-modal" onclick="closeModal(event, 'stickers-modal')">
+        <div class="modal" style="width: 600px;" onclick="event.stopPropagation()">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3>Студия Стикеров</h3>
+                <span style="cursor:pointer; font-weight:bold; padding:4px;" onclick="document.getElementById('stickers-modal').style.display='none'">✕</span>
+            </div>
+            
+            <div class="stickers-modal-body">
+                <div class="stickers-sidebar">
+                    <div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:4px;">ПАПКИ</div>
+                    <div id="stickers-groups-container" style="display:flex; flex-direction:column; gap:4px;"></div>
+                    <button class="secondary-btn" style="font-size:11px; margin-top:8px;" onclick="createNewStickerGroup()">+ Новая папка</button>
+                </div>
+                
+                <div style="flex-grow:1; display:flex; flex-direction:column;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span id="active-sticker-group-name" style="font-weight:700; font-size:14px;">Мои стикеры</span>
+                        <button class="primary-btn" style="margin:0; width:auto; padding:6px 12px; font-size:12px;" onclick="document.getElementById('sticker-upload-input').click()">+ Загрузить картинку</button>
+                    </div>
+                    <div id="stickers-grid" class="stickers-grid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКИ (Папки, Задачи) -->
     <div class="modal-overlay" id="folder-modal" onclick="closeModal(event, 'folder-modal')">
         <div class="modal small-modal" onclick="event.stopPropagation()">
             <h3 style="margin-bottom: 12px;">Папка</h3>
@@ -364,38 +432,16 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="task-context-modal" onclick="closeModal(event, 'task-context-modal')">
-        <div class="modal small-modal" onclick="event.stopPropagation()">
-            <h3 style="margin-bottom: 14px;" id="ctx-task-title">Управление</h3>
-            <button class="primary-btn" style="margin-bottom:8px;" onclick="editCurrentTaskFromCtx()">✏️ Изменить</button>
-            <div style="display:flex; gap:8px; margin-bottom:8px;">
-                <select id="ctx-move-select" style="margin:0;">
-                    <option value="tomorrow">На завтра</option>
-                    <option value="next_week">На следующую неделю</option>
-                </select>
-                <button class="secondary-btn" onclick="moveCurrentTaskFromCtx()">Перенести</button>
-            </div>
-            <button class="secondary-btn" style="width:100%; color:#d32f2f; border-color:#d32f2f;" onclick="deleteCurrentTaskFromCtx()">🗑️ Удалить</button>
-        </div>
-    </div>
-
     <div class="modal-overlay" id="task-modal" onclick="closeModal(event, 'task-modal')">
         <div class="modal small-modal" onclick="event.stopPropagation()">
             <h3 style="margin-bottom: 12px;">Новая карточка</h3>
             <div class="form-row" style="margin-bottom:12px;">
-                <select id="task-type" onchange="document.getElementById('task-repeat').style.display = this.value==='event' ? 'block' : 'none';">
+                <select id="task-type">
                     <option value="task">📝 Задача (Можно выполнить)</option>
                     <option value="event">📅 Событие (Полная заливка)</option>
                 </select>
-                <select id="task-repeat" style="display:none;">
-                    <option value="none">Без повтора</option>
-                    <option value="daily">Каждый день</option>
-                    <option value="weekly">Каждую неделю</option>
-                    <option value="monthly">Каждый месяц</option>
-                </select>
             </div>
             <input type="text" id="task-name" placeholder="Название">
-            <div class="form-row"><input type="time" id="task-time" style="flex:1;"><input type="text" id="task-location" placeholder="Место" style="flex:1;"></div>
             <p style="font-size:12px; color:var(--text-muted);">Иконка:</p>
             <div class="emoji-picker-grid" id="task-emoji-grid"></div>
             <p style="font-size:12px; color:var(--text-muted);">Папка:</p>
@@ -417,23 +463,17 @@
     <div class="modal-overlay" id="settings-modal" onclick="closeModal(event, 'settings-modal')">
         <div class="modal small-modal" onclick="event.stopPropagation()">
             <h3 style="margin-bottom: 16px;">Настройки</h3>
-            <div style="background:var(--sidebar-bg); padding:12px; border-radius:8px; margin-bottom:14px; text-align:center;">
-                <p style="font-weight:700; font-size:13px; margin-bottom:6px;" id="auth-user-name">Firebase</p>
-                <button class="primary-btn" style="margin:0; font-size:12px;" id="auth-btn" onclick="loginWithGoogle()">🌐 Войти через Google</button>
-            </div>
             <select id="theme-select" onchange="changeTheme()">
                 <option value="light">Светлая тема</option>
                 <option value="dark">Тёмная тема</option>
             </select>
         </div>
     </div>
-
+    
     <div class="modal-overlay" id="export-modal" onclick="closeModal(event, 'export-modal')">
         <div class="modal small-modal" onclick="event.stopPropagation()">
             <h3 style="margin-bottom: 16px;">Экспорт блокнота</h3>
             <button class="primary-btn" style="margin-bottom: 8px;" onclick="exportNotebookAsImage()">🖼️ Скачать как PNG</button>
-            <button class="secondary-btn" style="width:100%; margin-bottom: 8px;" onclick="exportNotebookAsPDF()">📄 Сохранить как PDF</button>
-            <button class="secondary-btn" style="width:100%; margin-bottom: 8px;" onclick="shareNotebook()">📤 Отправить / Поделиться</button>
         </div>
     </div>
 
@@ -449,63 +489,33 @@
         let selectedPenSwatch = penSwatches[0]; let selectedHlSwatch = highlighterSwatches[0];
         let isEyedropperActive = false;
 
+        // Миграция и структура стикеров
+        let stickerData = JSON.parse(localStorage.getItem('global_stickers_v3'));
+        if (!stickerData) {
+            let oldItems = JSON.parse(localStorage.getItem('global_stickers_v1')) || [];
+            stickerData = {
+                activeGroupId: 'g1',
+                groups: [{id: 'g1', name: 'Мои стикеры'}],
+                items: oldItems.map(st => ({...st, groupId: 'g1'}))
+            };
+        }
+        
+        let imageCache = {}; // Кэш для мгновенного рендеринга картинок
+
         let penState = JSON.parse(localStorage.getItem('pen_state_v15')) || { subtype: 'fountain', size: 6, pressure: 50 };
         let markerState = JSON.parse(localStorage.getItem('marker_state_v15')) || { size: 24 };
         let eraserState = JSON.parse(localStorage.getItem('eraser_state_v15')) || { size: 20, filters: {ballpoint:true, fountain:true, pencil:true, highlighter:true} };
 
         let appData = JSON.parse(localStorage.getItem('schedule_data_v15')) || { folders: [{ id: 'f1', name: 'Учеба', icon: '🎓', color: '#BAE1FF' }], tasks: [], files: [], theme: 'light' };
 
-        const DB_NAME = 'GoodNotesAppDB';
-        const DB_VERSION = 1;
-        const STORE_NAME = 'app_store';
-
-        function openIDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                request.onupgradeneeded = (e) => {
-                    const db = e.target.result;
-                    if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
-                };
-                request.onsuccess = (e) => resolve(e.target.result);
-                request.onerror = (e) => reject(e.target.error);
-            });
-        }
-
-        async function getIDBItem(key) {
-            try {
-                const db = await openIDB();
-                return new Promise((resolve) => {
-                    const tx = db.transaction(STORE_NAME, 'readonly');
-                    const store = tx.objectStore(STORE_NAME);
-                    const req = store.get(key);
-                    req.onsuccess = () => resolve(req.result);
-                    req.onerror = () => resolve(null);
-                });
-            } catch (e) { return null; }
-        }
-
-        async function setIDBItem(key, val) {
-            try {
-                const db = await openIDB();
-                return new Promise((resolve, reject) => {
-                    const tx = db.transaction(STORE_NAME, 'readwrite');
-                    const store = tx.objectStore(STORE_NAME);
-                    const req = store.put(val, key);
-                    req.onsuccess = () => resolve(true);
-                    req.onerror = (e) => reject(e.target.error);
-                });
-            } catch (e) { console.error('IDB error:', e); }
-        }
-
         async function saveData() { 
             try { localStorage.setItem('schedule_data_v15', JSON.stringify(appData)); } catch (e) {}
-            await setIDBItem('schedule_data_v15', appData);
             localStorage.setItem('pen_state_v15', JSON.stringify(penState));
             localStorage.setItem('marker_state_v15', JSON.stringify(markerState));
             localStorage.setItem('eraser_state_v15', JSON.stringify(eraserState));
             localStorage.setItem('pen_swatches_v20', JSON.stringify(penSwatches));
             localStorage.setItem('hl_swatches_v20', JSON.stringify(highlighterSwatches));
-            if (window.syncDataToFirebase) window.syncDataToFirebase();
+            try { localStorage.setItem('global_stickers_v3', JSON.stringify(stickerData)); } catch(e) { console.log('Стикеры слишком тяжелые для локал стораджа'); }
         }
 
         const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
@@ -514,9 +524,7 @@
         let contextTargetFolderId = null; let contextTargetTaskId = null; let contextTargetNbId = null;
         let editingFolderId = null; let editingTaskId = null; let addingTaskToDate = null;
 
-        document.addEventListener('DOMContentLoaded', async () => { 
-            const savedIDBData = await getIDBItem('schedule_data_v15');
-            if (savedIDBData) appData = savedIDBData;
+        document.addEventListener('DOMContentLoaded', () => { 
             if (appData.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); 
             initEmojiGrids(); initPastelPickers(); 
             renderFolders(); renderCalendar(); 
@@ -524,6 +532,15 @@
             document.addEventListener('pointerdown', (e) => {
                 if (!e.target.closest('.gn-popover-panel') && !e.target.closest('.gn-tool-icon-btn')) {
                     closeAllPopovers();
+                }
+                if (!e.target.closest('#lasso-floating-menu') && currentTool !== 'crop') {
+                    document.getElementById('lasso-floating-menu').style.display = 'none';
+                    document.getElementById('lasso-scale-wrap').style.display = 'none';
+                    document.getElementById('lasso-color-wrap').style.display = 'none';
+                    if (currentNotebook && activePageIndex !== undefined) {
+                        const uiCtx = document.getElementById(`ui-canvas-${activePageIndex}`).getContext('2d');
+                        uiCtx.clearRect(0,0,794,1123);
+                    }
                 }
             });
         });
@@ -562,54 +579,21 @@
             else {
                 filesGrid.innerHTML = '';
                 folderFiles.forEach(file => {
-                    const div = document.createElement('div');
-                    div.className = 'file-card';
+                    const div = document.createElement('div'); div.className = 'file-card';
                     div.innerHTML = `<div class="file-icon">📘</div><div class="file-name">${file.name}</div>`;
                     div.onclick = () => launchNotebookStudio(file.id);
-                    
-                    let longPressTimer;
-                    div.addEventListener('touchstart', (e) => {
-                        longPressTimer = setTimeout(() => openNotebookContextMenu(file.id, file.name), 500);
-                    });
-                    div.addEventListener('touchend', () => clearTimeout(longPressTimer));
-                    div.addEventListener('touchmove', () => clearTimeout(longPressTimer));
+                    let longPressTimer; div.addEventListener('touchstart', (e) => { longPressTimer = setTimeout(() => openNotebookContextMenu(file.id, file.name), 500); });
+                    div.addEventListener('touchend', () => clearTimeout(longPressTimer)); div.addEventListener('touchmove', () => clearTimeout(longPressTimer));
                     div.oncontextmenu = (e) => { e.preventDefault(); openNotebookContextMenu(file.id, file.name); };
-
                     filesGrid.appendChild(div);
                 });
             }
         }
 
-        function openNotebookContextMenu(id, name) {
-            contextTargetNbId = id;
-            document.getElementById('ctx-nb-title').innerText = name;
-            const fSelect = document.getElementById('ctx-nb-folder-select');
-            fSelect.innerHTML = appData.folders.map(f => `<option value="${f.id}" ${f.id===contextTargetFolderId?'selected':''}>${f.icon} ${f.name}</option>`).join('');
-            document.getElementById('notebook-context-modal').style.display = 'flex';
-        }
-
-        function renameNotebookFromCtx() {
-            document.getElementById('notebook-context-modal').style.display = 'none';
-            const nb = appData.files.find(x => x.id === contextTargetNbId);
-            if(!nb) return;
-            const newName = prompt('Новое название блокнота:', nb.name);
-            if(newName) { nb.name = newName; saveData(); renderFolderViewData(); }
-        }
-
-        function moveNotebookFromCtx() {
-            const newFolderId = document.getElementById('ctx-nb-folder-select').value;
-            const nb = appData.files.find(x => x.id === contextTargetNbId);
-            if(nb) { nb.folderId = newFolderId; saveData(); renderFolderViewData(); }
-            document.getElementById('notebook-context-modal').style.display = 'none';
-        }
-
-        function deleteNotebookFromCtx() {
-            if(confirm('Удалить этот блокнот?')) {
-                appData.files = appData.files.filter(x => x.id !== contextTargetNbId);
-                saveData(); renderFolderViewData();
-            }
-            document.getElementById('notebook-context-modal').style.display = 'none';
-        }
+        function openNotebookContextMenu(id, name) { contextTargetNbId = id; document.getElementById('ctx-nb-title').innerText = name; const fSelect = document.getElementById('ctx-nb-folder-select'); fSelect.innerHTML = appData.folders.map(f => `<option value="${f.id}" ${f.id===contextTargetFolderId?'selected':''}>${f.icon} ${f.name}</option>`).join(''); document.getElementById('notebook-context-modal').style.display = 'flex'; }
+        function renameNotebookFromCtx() { document.getElementById('notebook-context-modal').style.display = 'none'; const nb = appData.files.find(x => x.id === contextTargetNbId); if(!nb) return; const newName = prompt('Новое название блокнота:', nb.name); if(newName) { nb.name = newName; saveData(); renderFolderViewData(); } }
+        function moveNotebookFromCtx() { const newFolderId = document.getElementById('ctx-nb-folder-select').value; const nb = appData.files.find(x => x.id === contextTargetNbId); if(nb) { nb.folderId = newFolderId; saveData(); renderFolderViewData(); } document.getElementById('notebook-context-modal').style.display = 'none'; }
+        function deleteNotebookFromCtx() { if(confirm('Удалить этот блокнот?')) { appData.files = appData.files.filter(x => x.id !== contextTargetNbId); saveData(); renderFolderViewData(); } document.getElementById('notebook-context-modal').style.display = 'none'; }
 
         function openCreateNotebookModal() { document.getElementById('notebook-modal').style.display = 'flex'; }
         function saveAndLaunchNotebook() { const title = document.getElementById('nb-input-title').value || 'Блокнот'; const newNb = { id: 'nb_'+Date.now(), folderId: contextTargetFolderId, type: 'notebook', name: title, pages: [{ id: 'p_1', pattern: 'grid', bgColor: '#ffffff', objects: [] }] }; appData.files.push(newNb); saveData(); document.getElementById('notebook-modal').style.display = 'none'; renderFolderViewData(); launchNotebookStudio(newNb.id); }
@@ -618,23 +602,27 @@
         async function handlePDFUpload(event) {
             const file = event.target.files[0];
             if (!file || file.type !== 'application/pdf') return;
-            alert('Обработка PDF... Пожалуйста, подождите несколько секунд.');
+            alert('Обработка PDF... Документ будет загружен в высоком качестве.');
             try {
                 const arrayBuffer = await file.arrayBuffer();
                 const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
                 const totalPages = pdf.numPages;
                 const newPages = [];
+                const renderScale = window.devicePixelRatio > 1 ? 2.5 : 1.5; 
+
                 for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
                     const page = await pdf.getPage(pageNum);
                     const unscaledViewport = page.getViewport({ scale: 1.0 });
-                    const scale = 794 / unscaledViewport.width;
+                    const scale = (794 / unscaledViewport.width) * renderScale; 
                     const viewport = page.getViewport({ scale: scale });
+                    
                     const tempCanvas = document.createElement('canvas');
                     const tempCtx = tempCanvas.getContext('2d');
                     tempCanvas.width = viewport.width;
                     tempCanvas.height = viewport.height;
+                    
                     await page.render({ canvasContext: tempCtx, viewport: viewport }).promise;
-                    const bgDataUrl = tempCanvas.toDataURL('image/jpeg', 0.8);
+                    const bgDataUrl = tempCanvas.toDataURL('image/jpeg', 0.85);
                     newPages.push({ id: 'p_' + Date.now() + '_' + pageNum, bgImage: bgDataUrl, pattern: 'blank', bgColor: '#ffffff', objects: [] });
                 }
                 const newNb = { id: 'nb_' + Date.now(), folderId: contextTargetFolderId, type: 'notebook', name: file.name.replace('.pdf', ''), pages: newPages };
@@ -643,303 +631,150 @@
             finally { event.target.value = ''; }
         }
 
+        // ИМПОРТ ИЗОБРАЖЕНИЙ
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    const w = Math.min(img.width, 500);
+                    const h = img.height * (w / img.width);
+                    const newObj = {
+                        id: 'img_' + Date.now(), type: 'image', dataUrl: ev.target.result,
+                        x: 50, y: 50, width: w, height: h, scale: 1
+                    };
+                    currentNotebook.pages[activePageIndex].objects.push(newObj);
+                    saveData();
+                    renderPageObjects(activePageIndex);
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
+        }
+
         function showMonthView() { document.getElementById('week-view').style.display = 'none'; document.getElementById('folder-view').style.display = 'none'; document.getElementById('notebook-studio').style.display = 'none'; document.getElementById('back-btn').style.display = 'none'; document.getElementById('month-view').style.display = 'flex'; renderCalendar(); }
         function renderCalendar() { const year = currentDate.getFullYear(); const month = currentDate.getMonth(); document.getElementById('main-title').innerText = `${months[month]} ${year}`; const grid = document.getElementById('calendar-grid'); grid.innerHTML = '<div class="weekday">ПН</div><div class="weekday">ВТ</div><div class="weekday">СР</div><div class="weekday">ЧТ</div><div class="weekday">ПТ</div><div class="weekday">СБ</div><div class="weekday">ВС</div>'; const firstDayIndex = new Date(year, month, 1).getDay() || 7; const daysInMonth = new Date(year, month + 1, 0).getDate(); const prevMonthDays = new Date(year, month, 0).getDate(); const todayStr = getTodayStr(); for (let i = 1; i < firstDayIndex; i++) grid.appendChild(createDayCell(prevMonthDays - firstDayIndex + i + 1, true)); for (let i = 1; i <= daysInMonth; i++) { const dateObj = new Date(year, month, i); grid.appendChild(createDayCell(i, false, dateObj, dateToStr(dateObj) === todayStr, dateToStr(dateObj))); } const remaining = (7 - ((grid.children.length - 7) % 7)) % 7; for (let i = 1; i <= remaining; i++) grid.appendChild(createDayCell(i, true)); }
         function createDayCell(dayNum, isOtherMonth, dateObj = null, isToday = false, dateStr = '') { const cell = document.createElement('div'); cell.className = `day-cell ${isOtherMonth ? 'other-month' : ''}`; let html = `<div class="day-header"><div class="day-number">${dayNum}</div>${isToday?'<div class="today-indicator"></div>':''}</div>`; if (dateStr) { const dayTasks = appData.tasks.filter(t => t.date === dateStr); if (dayTasks.length > 0) html += `<div class="day-events-mini">` + dayTasks.slice(0,3).map(t => `<div class="mini-event-badge" style="background:${t.type==='event'?t.color:'transparent'}; border:${t.type==='task'?'1px solid '+t.color:'none'};"><span>${t.icon||'📌'}</span> <span>${t.text}</span></div>`).join('') + `</div>`; } cell.innerHTML = html; if(!isOtherMonth && dateObj) cell.onclick = () => showWeekView(dateObj); return cell; }
         function changeMonth(dir) { currentDate.setMonth(currentDate.getMonth() + dir); renderCalendar(); }
 
-        function showWeekView(clickedDate) { 
-            currentWeekDate = clickedDate; 
-            document.getElementById('month-view').style.display = 'none'; document.getElementById('folder-view').style.display = 'none'; document.getElementById('notebook-studio').style.display = 'none';
-            document.getElementById('main-header-bar').style.display = 'flex'; document.getElementById('back-btn').style.display = 'block';
-            const weekBoard = document.getElementById('week-view'); weekBoard.style.display = 'flex'; 
-            weekBoard.innerHTML = ''; const startOfWeek = new Date(clickedDate); startOfWeek.setDate(clickedDate.getDate() - (clickedDate.getDay()||7) + 1); 
-            document.getElementById('main-title').innerText = `Неделя`; 
-            
-            for (let i = 0; i < 7; i++) { 
-                const colDate = new Date(startOfWeek); colDate.setDate(startOfWeek.getDate() + i); const dateStr = dateToStr(colDate); 
-                const col = document.createElement('div'); col.className = 'column'; 
-                col.innerHTML = `<div class="column-header">${weekdays[i]} ${colDate.getDate()}</div>`; 
-                
-                appData.tasks.filter(t => t.date === dateStr).forEach(t => { 
-                    const card = document.createElement('div'); 
-                    card.className = `item-card ${t.type||'task'} ${t.completed ? 'completed' : ''}`; 
-                    if(t.type === 'event') { card.style.backgroundColor = t.color; }
-                    else { card.style.borderColor = t.color; }
-                    
-                    card.innerHTML = `<div style="display:flex; align-items:center; gap:6px;"><span>${t.icon||'📌'}</span> <span>${t.text}</span></div><div class="task-check-icon" style="color:${t.color}">✔</div>`; 
-                    card.onclick = () => { if (t.type !== 'event') { t.completed = !t.completed; saveData(); showWeekView(currentWeekDate); } };
-                    card.oncontextmenu = (e) => { e.preventDefault(); contextTargetTaskId = t.id; document.getElementById('task-context-modal').style.display = 'flex'; }; 
-                    col.appendChild(card); 
-                }); 
-                
-                const addBtn = document.createElement('div'); addBtn.className = 'add-card-btn'; addBtn.innerText = '+ Добавить'; 
-                addBtn.onclick = () => openTaskModal(dateStr); col.appendChild(addBtn); weekBoard.appendChild(col); 
-            } 
-        }
-
-        function openTaskModal(dateStr) { editingTaskId = null; addingTaskToDate = dateStr; document.getElementById('task-name').value = ''; document.getElementById('task-type').value = 'task'; document.getElementById('task-repeat').style.display = 'none'; const fSelect = document.getElementById('task-folder-select'); fSelect.innerHTML = '<option value="">(Без папки)</option>' + appData.folders.map(f => `<option value="${f.id}">${f.icon} ${f.name}</option>`).join(''); document.getElementById('task-modal').style.display = 'flex'; }
-        function saveTask() { 
-            const name = document.getElementById('task-name').value; if(!name) return; 
-            const tType = document.getElementById('task-type').value; const repeat = document.getElementById('task-repeat').value;
-            const folderIdVal = document.getElementById('task-folder-select').value || null;
-            
-            if(editingTaskId) { 
-                const t = appData.tasks.find(x => x.id === editingTaskId); 
-                if(t) { t.text = name; t.icon = selectedTaskIcon; t.color = selectedTaskColor; t.type = tType; t.folderId = folderIdVal; } 
-            } else { 
-                const newTask = { id: 't_' + Date.now(), date: addingTaskToDate, text: name, icon: selectedTaskIcon, type: tType, color: selectedTaskColor, completed: false, folderId: folderIdVal };
-                appData.tasks.push(newTask); 
-                if (tType === 'event' && repeat !== 'none') {
-                    let curD = new Date(addingTaskToDate);
-                    for(let i=1; i<20; i++) {
-                        if(repeat==='daily') curD.setDate(curD.getDate()+1); if(repeat==='weekly') curD.setDate(curD.getDate()+7); if(repeat==='monthly') curD.setMonth(curD.getMonth()+1);
-                        appData.tasks.push({...newTask, id: 't_' + Date.now() + i, date: dateToStr(curD)});
-                    }
-                }
-            } 
-            saveData(); document.getElementById('task-modal').style.display = 'none'; showWeekView(currentWeekDate); 
-        }
-        function editCurrentTaskFromCtx() { document.getElementById('task-context-modal').style.display = 'none'; const t = appData.tasks.find(x => x.id === contextTargetTaskId); if(t) { editingTaskId = t.id; addingTaskToDate = t.date; document.getElementById('task-name').value = t.text; document.getElementById('task-type').value = t.type||'task'; selectedTaskIcon = t.icon; selectedTaskColor = t.color; const fSelect = document.getElementById('task-folder-select'); fSelect.innerHTML = '<option value="">(Без папки)</option>' + appData.folders.map(f => `<option value="${f.id}" ${f.id===t.folderId?'selected':''}>${f.icon} ${f.name}</option>`).join(''); initEmojiGrids(); initPastelPickers(); document.getElementById('task-modal').style.display = 'flex'; } }
-        function deleteCurrentTaskFromCtx() { appData.tasks = appData.tasks.filter(x => x.id !== contextTargetTaskId); saveData(); document.getElementById('task-context-modal').style.display = 'none'; showWeekView(currentWeekDate); }
-        function moveCurrentTaskFromCtx() { const t = appData.tasks.find(x => x.id === contextTargetTaskId); const moveVal = document.getElementById('ctx-move-select').value; if(t) { let d = new Date(t.date); if(moveVal === 'tomorrow') d.setDate(d.getDate()+1); if(moveVal === 'next_week') d.setDate(d.getDate()+7); t.date = dateToStr(d); saveData(); document.getElementById('task-context-modal').style.display = 'none'; showWeekView(currentWeekDate); } }
-
         // ==========================================================
-        // GOODNOTES STUDIO & ПЛАНШЕТНЫЕ ЖЕСТЫ
+        // GOODNOTES STUDIO & ПЛАНШЕТНЫЕ ЖЕСТЫ, ЛАССО И СТИКЕРЫ
         // ==========================================================
         let currentNotebook = null; let activePageIndex = 0; let currentTool = 'pen';
         let isDrawing = false; let activeDrawingPageIdx = 0;
         let pointsBuffer = []; let holdTimer = null; let isSnapping = false; let snapShapeData = null;
         let scrollObserver = null;
         let currentZoom = 1.0; let initialPinchDist = null;
+        
+        let lassoPoints = []; let selectedObjectsIndices = [];
+        let cropStartPos = null;
 
         function launchNotebookStudio(nbId) {
             currentNotebook = appData.files.find(x => x.id === nbId);
-            if(!currentNotebook.pages || currentNotebook.pages.length === 0) {
-                currentNotebook.pages = [{ id: 'p_1', pattern: 'grid', bgColor: '#ffffff', objects: [] }];
-            }
-            activePageIndex = 0;
-            currentZoom = 1.0;
-            document.getElementById('main-header-bar').style.display = 'none'; 
-            document.getElementById('folder-view').style.display = 'none'; 
-            document.querySelector('.sidebar').style.display = 'none';
-            document.getElementById('notebook-studio').style.display = 'flex'; 
-            document.getElementById('nb-title-text').innerText = currentNotebook.name;
-            
-            renderQuickSwatchesBar();
-            renderAllPagesInScroll();
-            renderPagesSidebarList();
-            setupScrollObserver();
-            setupPinchZoom();
-            closeAllPopovers();
+            if(!currentNotebook.pages || currentNotebook.pages.length === 0) { currentNotebook.pages = [{ id: 'p_1', pattern: 'grid', bgColor: '#ffffff', objects: [] }]; }
+            activePageIndex = 0; currentZoom = 1.0;
+            document.getElementById('main-header-bar').style.display = 'none'; document.getElementById('folder-view').style.display = 'none'; document.querySelector('.sidebar').style.display = 'none'; document.getElementById('notebook-studio').style.display = 'flex'; document.getElementById('nb-title-text').innerText = currentNotebook.name;
+            renderQuickSwatchesBar(); renderAllPagesInScroll(); renderPagesSidebarList(); setupScrollObserver(); setupPinchZoom(); closeAllPopovers();
         }
 
-        function exitNotebookStudio() { 
-            document.getElementById('notebook-studio').style.display = 'none'; 
-            document.getElementById('main-header-bar').style.display = 'flex'; 
-            document.querySelector('.sidebar').style.display = 'flex'; 
-            openFolderView(contextTargetFolderId); 
-        }
-
+        function exitNotebookStudio() { document.getElementById('notebook-studio').style.display = 'none'; document.getElementById('main-header-bar').style.display = 'flex'; document.querySelector('.sidebar').style.display = 'flex'; openFolderView(contextTargetFolderId); }
         function togglePagesSidebar() { document.getElementById('nb-pages-sidebar').classList.toggle('collapsed'); }
 
-        function renderPagesSidebarList() { 
-            document.getElementById('pages-list-container').innerHTML = currentNotebook.pages.map((p, idx) => `
-                <div class="page-thumb-card ${idx===activePageIndex?'active':''}" onclick="scrollToPage(${idx})">
-                    <div class="page-thumb-preview" style="${getPageBackgroundCSS(p)}"></div>
-                    <div class="page-num-label">Стр. ${idx+1}</div>
-                </div>
-            `).join(''); 
-        }
-
-        function scrollToPage(idx) {
-            activePageIndex = idx;
-            const targetEl = document.getElementById(`paper-page-${idx}`);
-            if(targetEl) targetEl.scrollIntoView({ behavior: 'smooth' });
-            renderPagesSidebarList();
-            updatePageNumberDisplay();
-        }
-
-        function addNewPageToNotebook() { 
-            const lastPage = currentNotebook.pages[currentNotebook.pages.length - 1];
-            const pattern = lastPage ? (lastPage.pattern || 'grid') : 'grid';
-            const bgColor = lastPage ? (lastPage.bgColor || '#ffffff') : '#ffffff';
-            currentNotebook.pages.push({ id: 'p_' + Date.now(), pattern: pattern, bgColor: bgColor, objects: [] }); 
-            saveData(); 
-            renderAllPagesInScroll(); 
-            renderPagesSidebarList();
-            scrollToPage(currentNotebook.pages.length - 1);
-        }
-
-        function updatePageNumberDisplay() { 
-            document.getElementById('nb-page-num-display').innerText = `Стр. ${activePageIndex + 1} из ${currentNotebook.pages.length}`; 
-        }
+        function renderPagesSidebarList() { document.getElementById('pages-list-container').innerHTML = currentNotebook.pages.map((p, idx) => `<div class="page-thumb-card ${idx===activePageIndex?'active':''}" onclick="scrollToPage(${idx})"><div class="page-thumb-preview" style="${getPageBackgroundCSS(p)}"></div><div class="page-num-label">Стр. ${idx+1}</div></div>`).join(''); }
+        function scrollToPage(idx) { activePageIndex = idx; const targetEl = document.getElementById(`paper-page-${idx}`); if(targetEl) targetEl.scrollIntoView({ behavior: 'smooth' }); renderPagesSidebarList(); updatePageNumberDisplay(); }
+        function addNewPageToNotebook() { const lastPage = currentNotebook.pages[currentNotebook.pages.length - 1]; const pattern = lastPage ? (lastPage.pattern || 'grid') : 'grid'; const bgColor = lastPage ? (lastPage.bgColor || '#ffffff') : '#ffffff'; currentNotebook.pages.push({ id: 'p_' + Date.now(), pattern: pattern, bgColor: bgColor, objects: [] }); saveData(); renderAllPagesInScroll(); renderPagesSidebarList(); scrollToPage(currentNotebook.pages.length - 1); }
+        function updatePageNumberDisplay() { document.getElementById('nb-page-num-display').innerText = `Стр. ${activePageIndex + 1} из ${currentNotebook.pages.length}`; }
 
         function getPageBackgroundCSS(pageObj) {
-            if (pageObj.bgImage) {
-                return `background-image: url("${pageObj.bgImage}"); background-size: 100% 100%; background-color: #ffffff;`;
-            }
-            const bgColor = pageObj.bgColor || '#ffffff';
-            const pattern = pageObj.pattern || 'grid';
-            
-            let bgImg = 'none';
-            if (pattern === 'grid') {
-                const gridSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><path d='M 20 0 L 0 0 0 20' fill='none' stroke='%23d1d5db' stroke-width='0.8'/></svg>";
-                bgImg = `url("${gridSvg}")`;
-            } else if (pattern === 'line') {
-                const lineSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='28'><line x1='0' y1='27' x2='100%' y2='27' stroke='%23d1d5db' stroke-width='0.8'/></svg>";
-                bgImg = `url("${lineSvg}")`;
-            } else if (pattern === 'dot') {
-                const dotSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><circle cx='2' cy='2' r='1.2' fill='%239ca3af'/></svg>";
-                bgImg = `url("${dotSvg}")`;
-            }
-            
+            if (pageObj.bgImage) return `background-image: url("${pageObj.bgImage}"); background-size: 100% 100%; background-color: #ffffff;`;
+            const bgColor = pageObj.bgColor || '#ffffff'; const pattern = pageObj.pattern || 'grid'; let bgImg = 'none';
+            if (pattern === 'grid') bgImg = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><path d='M 20 0 L 0 0 0 20' fill='none' stroke='%23d1d5db' stroke-width='0.8'/></svg>")`;
+            else if (pattern === 'line') bgImg = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='28'><line x1='0' y1='27' x2='100%' y2='27' stroke='%23d1d5db' stroke-width='0.8'/></svg>")`;
+            else if (pattern === 'dot') bgImg = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><circle cx='2' cy='2' r='1.2' fill='%239ca3af'/></svg>")`;
             return `background-color: ${bgColor}; background-image: ${bgImg};`;
         }
 
         function renderAllPagesInScroll() {
-            const wrapper = document.getElementById('nb-pages-wrapper');
-            wrapper.innerHTML = '';
-
+            const wrapper = document.getElementById('nb-pages-wrapper'); wrapper.innerHTML = '';
             currentNotebook.pages.forEach((page, idx) => {
-                const paperDiv = document.createElement('div');
-                paperDiv.className = 'nb-page-paper';
-                paperDiv.id = `paper-page-${idx}`;
-                paperDiv.style.cssText = getPageBackgroundCSS(page);
-
-                paperDiv.innerHTML = `
-                    <div class="page-badge-label">Стр. ${idx + 1}</div>
-                    <canvas class="layer-canvas layer-hl" id="hl-canvas-${idx}" width="794" height="1123"></canvas>
-                    <canvas class="layer-canvas layer-pen" id="pen-canvas-${idx}" width="794" height="1123"></canvas>
-                    <canvas class="layer-canvas layer-ui" id="ui-canvas-${idx}" width="794" height="1123"></canvas>
-                `;
-
+                const paperDiv = document.createElement('div'); paperDiv.className = 'nb-page-paper'; paperDiv.id = `paper-page-${idx}`; paperDiv.style.cssText = getPageBackgroundCSS(page);
+                paperDiv.innerHTML = `<div class="page-badge-label">Стр. ${idx + 1}</div><canvas class="layer-canvas layer-hl" id="hl-canvas-${idx}" width="794" height="1123"></canvas><canvas class="layer-canvas layer-pen" id="pen-canvas-${idx}" width="794" height="1123"></canvas><canvas class="layer-canvas layer-ui" id="ui-canvas-${idx}" width="794" height="1123"></canvas>`;
                 wrapper.appendChild(paperDiv);
-
                 const penCanvas = paperDiv.querySelector(`#pen-canvas-${idx}`);
-                penCanvas.addEventListener('pointerdown', (e) => startDrawingOnPage(e, idx));
-                penCanvas.addEventListener('pointermove', (e) => drawStrokeOnPage(e, idx));
-                penCanvas.addEventListener('pointerup', (e) => stopDrawingOnPage(e, idx));
-                penCanvas.addEventListener('pointercancel', (e) => stopDrawingOnPage(e, idx));
-
+                penCanvas.addEventListener('pointerdown', (e) => startDrawingOnPage(e, idx)); penCanvas.addEventListener('pointermove', (e) => drawStrokeOnPage(e, idx)); penCanvas.addEventListener('pointerup', (e) => stopDrawingOnPage(e, idx)); penCanvas.addEventListener('pointercancel', (e) => stopDrawingOnPage(e, idx));
                 renderPageObjects(idx);
             });
-
             updatePageNumberDisplay();
         }
 
         function setupScrollObserver() {
             const container = document.getElementById('nb-scroll-container');
             const observerOptions = { root: container, threshold: 0.3 };
-            
             if(scrollObserver) scrollObserver.disconnect();
-            
             scrollObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const idStr = entry.target.id;
-                        const idx = parseInt(idStr.replace('paper-page-', ''));
-                        if (!isNaN(idx)) {
-                            activePageIndex = idx;
-                            updatePageNumberDisplay();
-                            renderPagesSidebarList();
-                        }
-                    }
-                });
+                entries.forEach(entry => { if (entry.isIntersecting) { const idx = parseInt(entry.target.id.replace('paper-page-', '')); if (!isNaN(idx)) { activePageIndex = idx; updatePageNumberDisplay(); renderPagesSidebarList(); } } });
             }, observerOptions);
-
-            currentNotebook.pages.forEach((_, idx) => {
-                const el = document.getElementById(`paper-page-${idx}`);
-                if (el) scrollObserver.observe(el);
-            });
+            currentNotebook.pages.forEach((_, idx) => { const el = document.getElementById(`paper-page-${idx}`); if (el) scrollObserver.observe(el); });
         }
 
-        // ПИНЧ-ТУ-ЗУМ ДВУМЯ ПАЛЬЦАМИ
         function setupPinchZoom() {
-            const container = document.getElementById('nb-scroll-container');
-            const wrapper = document.getElementById('nb-pages-wrapper');
-            let activeTouches = 0;
-
-            container.addEventListener('touchstart', (e) => {
-                activeTouches = e.touches.length;
-                if (activeTouches === 2) {
-                    initialPinchDist = Math.hypot(
-                        e.touches[0].clientX - e.touches[1].clientX,
-                        e.touches[0].clientY - e.touches[1].clientY
-                    );
-                }
-            }, { passive: true });
-
+            const container = document.getElementById('nb-scroll-container'); const wrapper = document.getElementById('nb-pages-wrapper'); let activeTouches = 0;
+            container.addEventListener('touchstart', (e) => { activeTouches = e.touches.length; if (activeTouches >= 2) initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); }, { passive: true });
             container.addEventListener('touchmove', (e) => {
-                if (activeTouches === 2 && initialPinchDist) {
-                    const currentDist = Math.hypot(
-                        e.touches[0].clientX - e.touches[1].clientX,
-                        e.touches[0].clientY - e.touches[1].clientY
-                    );
-                    const factor = currentDist / initialPinchDist;
-                    currentZoom = Math.min(Math.max(0.5, currentZoom * (factor > 1 ? 1.02 : 0.98)), 3.0);
-                    wrapper.style.transform = `scale(${currentZoom})`;
-                    initialPinchDist = currentDist;
+                if (e.touches.length >= 2 && initialPinchDist) {
+                    const currentDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); const factor = currentDist / initialPinchDist; currentZoom = Math.min(Math.max(0.4, currentZoom * (factor > 1 ? 1.03 : 0.97)), 3.5); wrapper.style.transform = `scale(${currentZoom})`; initialPinchDist = currentDist;
                 }
             }, { passive: true });
-
-            container.addEventListener('touchend', (e) => {
-                activeTouches = e.touches.length;
-                if (activeTouches < 2) initialPinchDist = null;
-            });
+            container.addEventListener('touchend', (e) => { activeTouches = e.touches.length; if (activeTouches < 2) initialPinchDist = null; });
         }
 
-        // РИСОВАНИЕ И ПИПЕТКА
+        // РИСОВАНИЕ, ПИПЕТКА, ЛАССО И ОБРЕЗКА
         function getToolAlpha(tool, subtype) { if(tool === 'highlighter') return 0.35; if(tool === 'pen' && subtype === 'pencil') return 0.4; return 1.0; }
-        
         function getCanvasCoordsForPage(e, pageIdx) { 
-            const penCanvas = document.getElementById(`pen-canvas-${pageIdx}`);
-            const rect = penCanvas.getBoundingClientRect(); 
-            return { 
-                x: (e.clientX - rect.left) * (penCanvas.width / rect.width), 
-                y: (e.clientY - rect.top) * (penCanvas.height / rect.height) 
-            }; 
+            const penCanvas = document.getElementById(`pen-canvas-${pageIdx}`); const rect = penCanvas.getBoundingClientRect(); 
+            let clientX = e.clientX; let clientY = e.clientY; if(e.touches && e.touches.length > 0) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
+            return { x: (clientX - rect.left) * (penCanvas.width / rect.width), y: (clientY - rect.top) * (penCanvas.height / rect.height), screenX: clientX, screenY: clientY }; 
         }
 
         function startDrawingOnPage(e, pageIdx) {
-            closeAllPopovers();
-            const pos = getCanvasCoordsForPage(e, pageIdx);
-
-            if (isEyedropperActive) {
-                pickColorFromCanvas(pageIdx, Math.round(pos.x), Math.round(pos.y));
-                return;
-            }
-
-            activeDrawingPageIdx = pageIdx;
-            isDrawing = true;
-            let pressure = e.pressure || 0.5; if(pressure===0) pressure=0.5;
-            pointsBuffer = [{x: pos.x, y: pos.y, p: pressure}];
-            if (currentTool === 'eraser') applyEraserOnPage(pos, pageIdx); 
+            closeAllPopovers(); const pos = getCanvasCoordsForPage(e, pageIdx);
+            if (isEyedropperActive) { pickColorFromCanvas(pageIdx, Math.round(pos.x), Math.round(pos.y)); return; }
+            activeDrawingPageIdx = pageIdx; isDrawing = true;
+            if (currentTool === 'crop') { cropStartPos = pos; return; }
+            let pressure = e.pressure || 0.5; if(pressure===0) pressure=0.5; pointsBuffer = [{x: pos.x, y: pos.y, p: pressure}];
+            if (currentTool === 'eraser') applyEraserOnPage(pos, pageIdx);
+            else if (currentTool === 'lasso') { lassoPoints = [pos]; document.getElementById('lasso-floating-menu').style.display = 'none'; }
             else holdTimer = setTimeout(() => triggerSnapOnPage(pageIdx), 600);
         }
 
         function drawStrokeOnPage(e, pageIdx) {
             if(!isDrawing || activeDrawingPageIdx !== pageIdx || isEyedropperActive) return;
-            const pos = getCanvasCoordsForPage(e, pageIdx);
+            const pos = getCanvasCoordsForPage(e, pageIdx); const uiCtx = document.getElementById(`ui-canvas-${pageIdx}`).getContext('2d');
+            
+            if (currentTool === 'crop' && cropStartPos) {
+                uiCtx.clearRect(0,0,794,1123); uiCtx.beginPath(); uiCtx.strokeStyle = '#2383e2'; uiCtx.lineWidth = 2; uiCtx.setLineDash([6, 6]);
+                uiCtx.strokeRect(cropStartPos.x, cropStartPos.y, pos.x - cropStartPos.x, pos.y - cropStartPos.y); uiCtx.setLineDash([]); return;
+            }
+
             let pressure = e.pressure || 0.5; if(pressure===0) pressure=0.5;
-
             if (currentTool === 'eraser') { applyEraserOnPage(pos, pageIdx); return; }
+            if (currentTool === 'lasso') {
+                lassoPoints.push(pos); uiCtx.clearRect(0,0,794,1123); uiCtx.beginPath(); uiCtx.strokeStyle = '#2383e2'; uiCtx.lineWidth = 2; uiCtx.setLineDash([4, 4]);
+                uiCtx.moveTo(lassoPoints[0].x, lassoPoints[0].y); lassoPoints.forEach(pt => uiCtx.lineTo(pt.x, pt.y)); uiCtx.stroke(); uiCtx.setLineDash([]); return;
+            }
 
-            const curSize = (currentTool === 'highlighter') ? markerState.size : penState.size;
-            const curColor = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch;
-            const uiCtx = document.getElementById(`ui-canvas-${pageIdx}`).getContext('2d');
-
+            const curSize = (currentTool === 'highlighter') ? markerState.size : penState.size; const curColor = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch;
             if (isSnapping) {
-                if(snapShapeData.type === 'line') snapShapeData.end = pos;
-                else if (snapShapeData.type === 'ellipse') { snapShapeData.rx = Math.abs(pos.x - snapShapeData.cx); snapShapeData.ry = Math.abs(pos.y - snapShapeData.cy); }
+                if(snapShapeData.type === 'line') snapShapeData.end = pos; else if (snapShapeData.type === 'ellipse') { snapShapeData.rx = Math.abs(pos.x - snapShapeData.cx); snapShapeData.ry = Math.abs(pos.y - snapShapeData.cy); }
                 uiCtx.clearRect(0,0,794,1123); uiCtx.beginPath(); uiCtx.strokeStyle = curColor; uiCtx.lineWidth = curSize; uiCtx.globalAlpha = getToolAlpha(currentTool, penState.subtype);
                 if(snapShapeData.type === 'line') { uiCtx.moveTo(snapShapeData.start.x, snapShapeData.start.y); uiCtx.lineTo(snapShapeData.end.x, snapShapeData.end.y); } else { uiCtx.ellipse(snapShapeData.cx, snapShapeData.cy, snapShapeData.rx, snapShapeData.ry, 0, 0, Math.PI*2); }
                 uiCtx.stroke();
             } else {
-                pointsBuffer.push({x: pos.x, y: pos.y, p: pressure});
-                const dist = Math.hypot(pos.x - pointsBuffer[pointsBuffer.length-2].x, pos.y - pointsBuffer[pointsBuffer.length-2].y);
+                pointsBuffer.push({x: pos.x, y: pos.y, p: pressure}); const dist = Math.hypot(pos.x - pointsBuffer[pointsBuffer.length-2].x, pos.y - pointsBuffer[pointsBuffer.length-2].y);
                 if(dist > 5) { clearTimeout(holdTimer); holdTimer = setTimeout(() => triggerSnapOnPage(pageIdx), 600); }
-
                 uiCtx.beginPath(); uiCtx.strokeStyle = curColor; uiCtx.lineCap = 'round'; uiCtx.lineJoin = 'round'; uiCtx.globalAlpha = getToolAlpha(currentTool, penState.subtype);
                 uiCtx.moveTo(pointsBuffer[pointsBuffer.length-2].x, pointsBuffer[pointsBuffer.length-2].y); uiCtx.lineTo(pos.x, pos.y);
                 let w = curSize; if(currentTool === 'pen' && penState.pressure > 0) w = curSize * (pressure * 2);
@@ -949,10 +784,8 @@
 
         function triggerSnapOnPage(pageIdx) {
             if(pointsBuffer.length < 5) return; isSnapping = true;
-            let minX=10000, maxX=0, minY=10000, maxY=0;
-            pointsBuffer.forEach(pt => { if(pt.x < minX) minX=pt.x; if(pt.x > maxX) maxX=pt.x; if(pt.y < minY) minY=pt.y; if(pt.y > maxY) maxY=pt.y; });
-            const start = pointsBuffer[0], end = pointsBuffer[pointsBuffer.length-1];
-            const dist = Math.hypot(end.x-start.x, end.y-start.y);
+            let minX=10000, maxX=0, minY=10000, maxY=0; pointsBuffer.forEach(pt => { if(pt.x < minX) minX=pt.x; if(pt.x > maxX) maxX=pt.x; if(pt.y < minY) minY=pt.y; if(pt.y > maxY) maxY=pt.y; });
+            const start = pointsBuffer[0], end = pointsBuffer[pointsBuffer.length-1]; const dist = Math.hypot(end.x-start.x, end.y-start.y);
             if (dist < 40 && (maxX-minX)>20 && (maxY-minY)>20) snapShapeData = { type: 'ellipse', cx: minX+(maxX-minX)/2, cy: minY+(maxY-minY)/2, rx: (maxX-minX)/2, ry: (maxY-minY)/2 };
             else snapShapeData = { type: 'line', start: start, end: end };
         }
@@ -960,43 +793,329 @@
         function stopDrawingOnPage(e, pageIdx) {
             if(!isDrawing || activeDrawingPageIdx !== pageIdx || isEyedropperActive) return; 
             isDrawing = false; clearTimeout(holdTimer);
-            if (currentTool === 'eraser') return;
-            const curSize = (currentTool === 'highlighter') ? markerState.size : penState.size; const curColor = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch;
-            const pageObj = currentNotebook.pages[pageIdx];
-            if(!pageObj.redoStack) pageObj.redoStack = [];
-            pageObj.redoStack = []; // очищаем стек возврата при новом штрихе
-
-            if(isSnapping) {
-                pageObj.objects.push({ id: 'shp_' + Date.now(), type: 'shape', shape: snapShapeData, tool: currentTool, subtype: penState.subtype, color: curColor, size: curSize });
-                isSnapping = false; snapShapeData = null; 
-            } else { 
-                pageObj.objects.push({ id: 'str_' + Date.now(), type: 'stroke', tool: currentTool, subtype: penState.subtype, color: curColor, size: curSize, points: pointsBuffer }); 
-            }
             const uiCtx = document.getElementById(`ui-canvas-${pageIdx}`).getContext('2d');
+            
+            if (currentTool === 'crop') {
+                const pos = getCanvasCoordsForPage(e, pageIdx); uiCtx.clearRect(0,0,794,1123); executeCrop(cropStartPos, pos, pageIdx); cropStartPos = null; handleToolBtnClick('lasso'); return;
+            }
+            if (currentTool === 'eraser') return;
+            if (currentTool === 'lasso') { const pos = getCanvasCoordsForPage(e, pageIdx); processLassoSelection(pageIdx, pos.screenX, pos.screenY); return; }
+
+            const curSize = (currentTool === 'highlighter') ? markerState.size : penState.size; const curColor = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch;
+            const pageObj = currentNotebook.pages[pageIdx]; if(!pageObj.redoStack) pageObj.redoStack = []; pageObj.redoStack = [];
+
+            if(isSnapping) { pageObj.objects.push({ id: 'shp_' + Date.now(), type: 'shape', shape: snapShapeData, tool: currentTool, subtype: penState.subtype, color: curColor, size: curSize }); isSnapping = false; snapShapeData = null; } 
+            else { pageObj.objects.push({ id: 'str_' + Date.now(), type: 'stroke', tool: currentTool, subtype: penState.subtype, color: curColor, size: curSize, points: pointsBuffer }); }
+            uiCtx.clearRect(0,0,794,1123); saveData(); renderPageObjects(pageIdx);
+        }
+
+        // ЛАССО, ЦВЕТ, МАСШТАБ, ОБРЕЗКА
+        function processLassoSelection(pageIdx, screenX, screenY) {
+            const pageObj = currentNotebook.pages[pageIdx]; selectedObjectsIndices = [];
+            
+            // Если лассо - это просто точка (клик), ничего не делаем
+            if(lassoPoints.length < 3) {
+                const uiCtx = document.getElementById(`ui-canvas-${pageIdx}`).getContext('2d');
+                uiCtx.clearRect(0, 0, 794, 1123);
+                return;
+            }
+
+            pageObj.objects.forEach((obj, idx) => {
+                let inside = false;
+                if (obj.type === 'stroke') { inside = obj.points.some(pt => isPointInPolygon(pt, lassoPoints)); } 
+                else if (obj.type === 'shape') { inside = isPointInPolygon({x: obj.shape.cx || 0, y: obj.shape.cy || 0}, lassoPoints); } 
+                else if (obj.type === 'image') { const centerX = obj.x + obj.width/2; const centerY = obj.y + obj.height/2; inside = isPointInPolygon({x: centerX, y: centerY}, lassoPoints); }
+                if (inside) selectedObjectsIndices.push(idx);
+            });
+
+            if (selectedObjectsIndices.length > 0) {
+                const menu = document.getElementById('lasso-floating-menu');
+                menu.style.display = 'flex'; menu.style.left = (screenX + 10) + 'px'; menu.style.top = (screenY - 60) + 'px';
+                document.getElementById('lasso-scale-wrap').style.display = 'none'; document.getElementById('lasso-color-wrap').style.display = 'none'; document.getElementById('lasso-scale-slider').value = 1;
+            } else {
+                const uiCtx = document.getElementById(`ui-canvas-${pageIdx}`).getContext('2d'); uiCtx.clearRect(0, 0, 794, 1123);
+            }
+        }
+
+        function isPointInPolygon(pt, polygon) {
+            let isInside = false;
+            for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                let xi = polygon[i].x, yi = polygon[i].y; let xj = polygon[j].x, yj = polygon[j].y;
+                let intersect = ((yi > pt.y) !== (yj > pt.y)) && (pt.x < (xj - xi) * (pt.y - yi) / (yj - yi) + xi);
+                if (intersect) isInside = !isInside;
+            }
+            return isInside;
+        }
+
+        function deleteSelectedObjects() { const pageObj = currentNotebook.pages[activePageIndex]; pageObj.objects = pageObj.objects.filter((_, idx) => !selectedObjectsIndices.includes(idx)); selectedObjectsIndices = []; document.getElementById('lasso-floating-menu').style.display = 'none'; const uiCtx = document.getElementById(`ui-canvas-${activePageIndex}`).getContext('2d'); uiCtx.clearRect(0,0,794,1123); saveData(); renderPageObjects(activePageIndex); }
+
+        function toggleScaleSlider() { const wrap = document.getElementById('lasso-scale-wrap'); document.getElementById('lasso-color-wrap').style.display = 'none'; wrap.style.display = (wrap.style.display === 'flex') ? 'none' : 'flex'; }
+        function applyScaleToSelection(scaleVal) {
+            const scale = parseFloat(scaleVal); const pageObj = currentNotebook.pages[activePageIndex];
+            let minX=10000, minY=10000, maxX=0, maxY=0;
+            pageObj.objects.forEach((obj, idx) => {
+                if(!selectedObjectsIndices.includes(idx)) return;
+                if(obj.type === 'image') { if(obj.x<minX)minX=obj.x; if(obj.y<minY)minY=obj.y; if(obj.x+obj.width>maxX)maxX=obj.x+obj.width; if(obj.y+obj.height>maxY)maxY=obj.y+obj.height; }
+                else if(obj.type === 'stroke') { obj.points.forEach(pt => { if(pt.x<minX)minX=pt.x; if(pt.y<minY)minY=pt.y; if(pt.x>maxX)maxX=pt.x; if(pt.y>maxY)maxY=pt.y; }); }
+            });
+            const cx = minX + (maxX-minX)/2; const cy = minY + (maxY-minY)/2;
+            pageObj.objects.forEach((obj, idx) => { if(selectedObjectsIndices.includes(idx)) { obj.tempScale = scale; obj.cx = cx; obj.cy = cy; } });
+            renderPageObjects(activePageIndex);
+        }
+        function confirmScale() { const pageObj = currentNotebook.pages[activePageIndex]; pageObj.objects.forEach((obj, idx) => { if(selectedObjectsIndices.includes(idx) && obj.tempScale) { obj.scale = (obj.scale || 1) * obj.tempScale; delete obj.tempScale; } }); document.getElementById('lasso-floating-menu').style.display = 'none'; const uiCtx = document.getElementById(`ui-canvas-${activePageIndex}`).getContext('2d'); uiCtx.clearRect(0,0,794,1123); selectedObjectsIndices = []; saveData(); renderPageObjects(activePageIndex); }
+
+        // ПЕРЕКРАШИВАНИЕ С РАЗРЕЗАНИЕМ ЛИНИЙ
+        function toggleLassoColor() {
+            const wrap = document.getElementById('lasso-color-wrap');
+            document.getElementById('lasso-scale-wrap').style.display = 'none';
+            if (wrap.style.display === 'flex') { wrap.style.display = 'none'; return; }
+            wrap.innerHTML = penSwatches.map(hex => `<div class="swatch-circle" style="background-color:${hex}" onclick="applyColorToSelection('${hex}')"></div>`).join('');
+            wrap.style.display = 'flex';
+        }
+
+        function applyColorToSelection(newColor) {
+            const pageObj = currentNotebook.pages[activePageIndex];
+            let newObjects = [];
+            
+            pageObj.objects.forEach((obj, idx) => {
+                if (!selectedObjectsIndices.includes(idx)) {
+                    newObjects.push(obj); return;
+                }
+
+                if (obj.type === 'shape') {
+                    // Простая проверка по центру
+                    let cx = obj.shape.cx; let cy = obj.shape.cy;
+                    if (isPointInPolygon({x: cx, y: cy}, lassoPoints)) {
+                        newObjects.push({...obj, color: newColor});
+                    } else { newObjects.push(obj); }
+                } 
+                else if (obj.type === 'image') {
+                    // Картинку не перекрашиваем, оставляем как есть
+                    newObjects.push(obj);
+                } 
+                else if (obj.type === 'stroke') {
+                    // Разрезаем штрих!
+                    let currentSegment = [];
+                    let currentInLasso = null;
+
+                    obj.points.forEach(pt => {
+                        let inLasso = isPointInPolygon(pt, lassoPoints);
+                        if (currentInLasso === null) {
+                            currentInLasso = inLasso;
+                        } else if (currentInLasso !== inLasso) {
+                            if (currentSegment.length > 0) {
+                                newObjects.push({...obj, id: 'str_'+Math.random(), points: currentSegment, color: currentInLasso ? newColor : obj.color});
+                            }
+                            currentSegment = [pt];
+                            currentInLasso = inLasso;
+                        }
+                        currentSegment.push(pt);
+                    });
+                    
+                    if (currentSegment.length > 0) {
+                        newObjects.push({...obj, id: 'str_'+Math.random(), points: currentSegment, color: currentInLasso ? newColor : obj.color});
+                    }
+                }
+            });
+
+            pageObj.objects = newObjects;
+            
+            document.getElementById('lasso-floating-menu').style.display = 'none';
+            selectedObjectsIndices = [];
+            const uiCtx = document.getElementById(`ui-canvas-${activePageIndex}`).getContext('2d');
             uiCtx.clearRect(0,0,794,1123);
-            saveData(); renderPageObjects(pageIdx);
+            saveData(); renderPageObjects(activePageIndex);
         }
 
-        // UNDO / REDO СТРЕЛКИ НА ПАНЕЛИ
-        function undoAction() {
+        function startCropMode() { document.getElementById('lasso-floating-menu').style.display = 'none'; currentTool = 'crop'; alert('Режим обрезки: проведите рамку по выделенному изображению.'); }
+        function executeCrop(startPos, endPos, pageIdx) {
+            const pageObj = currentNotebook.pages[pageIdx];
+            const rx = Math.min(startPos.x, endPos.x); const ry = Math.min(startPos.y, endPos.y); const rw = Math.abs(endPos.x - startPos.x); const rh = Math.abs(endPos.y - startPos.y);
+            let croppedSomething = false;
+            pageObj.objects.forEach((obj, idx) => {
+                if (selectedObjectsIndices.includes(idx) && obj.type === 'image') {
+                    const img = imageCache[obj.id];
+                    if (img) {
+                        const tempCvs = document.createElement('canvas'); tempCvs.width = rw; tempCvs.height = rh; const ctx = tempCvs.getContext('2d');
+                        const objScale = obj.scale || 1; const drawX = obj.x - rx; const drawY = obj.y - ry;
+                        ctx.save(); ctx.translate(obj.cx || 0, obj.cy || 0); ctx.scale(objScale, objScale); ctx.translate(-(obj.cx || 0), -(obj.cy || 0));
+                        ctx.drawImage(img, drawX, drawY, obj.width, obj.height); ctx.restore();
+                        obj.dataUrl = tempCvs.toDataURL(); obj.x = rx; obj.y = ry; obj.width = rw; obj.height = rh; obj.scale = 1; delete imageCache[obj.id]; croppedSomething = true;
+                    }
+                }
+            });
+            selectedObjectsIndices = []; if(croppedSomething) { saveData(); renderPageObjects(pageIdx); }
+        }
+
+        function removeBackgroundFromSelection() {
             const pageObj = currentNotebook.pages[activePageIndex];
-            if (!pageObj || !pageObj.objects || pageObj.objects.length === 0) return;
-            if (!pageObj.redoStack) pageObj.redoStack = [];
-            const removed = pageObj.objects.pop();
-            pageObj.redoStack.push(removed);
-            saveData();
+            pageObj.objects.forEach((obj, idx) => {
+                if (selectedObjectsIndices.includes(idx) && obj.type === 'image') {
+                    const img = imageCache[obj.id];
+                    if(img) {
+                        const cvs = document.createElement('canvas'); cvs.width = img.width; cvs.height = img.height; const ctx = cvs.getContext('2d'); ctx.drawImage(img, 0, 0);
+                        const imgData = ctx.getImageData(0,0,cvs.width, cvs.height); const data = imgData.data; const r0 = data[0], g0 = data[1], b0 = data[2];
+                        for(let i=0; i<data.length; i+=4) { if(Math.abs(data[i]-r0)<30 && Math.abs(data[i+1]-g0)<30 && Math.abs(data[i+2]-b0)<30) { data[i+3] = 0; } }
+                        ctx.putImageData(imgData, 0, 0); obj.dataUrl = cvs.toDataURL(); delete imageCache[obj.id];
+                    }
+                }
+            });
+            document.getElementById('lasso-floating-menu').style.display = 'none'; selectedObjectsIndices = [];
+            const uiCtx = document.getElementById(`ui-canvas-${activePageIndex}`).getContext('2d'); uiCtx.clearRect(0,0,794,1123); saveData(); renderPageObjects(activePageIndex);
+        }
+
+        // ==========================================
+        // СТУДИЯ СТИКЕРОВ (Группировка и добавление)
+        // ==========================================
+        
+        function renderStickerGroups() {
+            const container = document.getElementById('stickers-groups-container');
+            container.innerHTML = stickerData.groups.map(g => `
+                <div class="sticker-group-btn ${g.id === stickerData.activeGroupId ? 'active' : ''}" onclick="selectStickerGroup('${g.id}')">
+                    📁 ${g.name}
+                </div>
+            `).join('');
+            
+            const activeGroup = stickerData.groups.find(g => g.id === stickerData.activeGroupId);
+            document.getElementById('active-sticker-group-name').innerText = activeGroup ? activeGroup.name : 'Стикеры';
+        }
+
+        function selectStickerGroup(id) {
+            stickerData.activeGroupId = id;
+            renderStickerGroups();
+            renderStickersGrid();
+        }
+
+        function createNewStickerGroup() {
+            const name = prompt('Название новой папки стикеров:', 'Новая папка');
+            if (name) {
+                const newId = 'g_' + Date.now();
+                stickerData.groups.push({ id: newId, name: name });
+                stickerData.activeGroupId = newId;
+                saveData();
+                renderStickerGroups();
+                renderStickersGrid();
+            }
+        }
+
+        function renderStickersGrid() {
+            const grid = document.getElementById('stickers-grid');
+            const items = stickerData.items.filter(i => i.groupId === stickerData.activeGroupId);
+            
+            if (items.length === 0) {
+                grid.innerHTML = '<div style="grid-column: span 3; text-align:center; color:var(--text-muted); padding:20px; font-size:12px;">Тут пока пусто.<br>Нажмите "Загрузить картинку" или сохраните рисунок лассо.</div>';
+            } else {
+                grid.innerHTML = items.map(st => `
+                    <div class="sticker-card" onclick="insertStickerToPage('${st.id}')">
+                        <button class="sticker-del-btn" onclick="deleteSticker(event, '${st.id}')">✕</button>
+                        <img src="${st.dataUrl}" style="width:100%; height:80px; object-fit:contain; background:#fafafa; border-radius:4px; margin-bottom:6px;">
+                        <div style="font-size:11px; font-weight:700; color:var(--text-main);">Вставить</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function deleteSticker(e, id) {
+            e.stopPropagation();
+            if(confirm('Удалить этот стикер?')) {
+                stickerData.items = stickerData.items.filter(i => i.id !== id);
+                saveData();
+                renderStickersGrid();
+            }
+        }
+
+        // Загрузка своего стикера из картинки прямо из панели
+        function handleStickerUpload(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    const w = Math.min(img.width, 300);
+                    const h = img.height * (w / img.width);
+                    
+                    const tempCanvas = document.createElement('canvas'); tempCanvas.width = w; tempCanvas.height = h;
+                    const ctx = tempCanvas.getContext('2d'); ctx.drawImage(img, 0, 0, w, h);
+                    const resizedDataUrl = tempCanvas.toDataURL();
+                    
+                    const newStickerObj = { id: 'obj_' + Date.now(), type: 'image', dataUrl: resizedDataUrl, x: 0, y: 0, width: w, height: h, scale: 1 };
+                    
+                    stickerData.items.push({
+                        id: 'st_' + Date.now(),
+                        groupId: stickerData.activeGroupId,
+                        dataUrl: resizedDataUrl,
+                        objects: [newStickerObj]
+                    });
+                    
+                    saveData();
+                    renderStickersGrid();
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
+        }
+
+        function saveSelectedAsSticker() {
+            const pageObj = currentNotebook.pages[activePageIndex];
+            const selectedObjs = pageObj.objects.filter((_, idx) => selectedObjectsIndices.includes(idx));
+            if (selectedObjs.length === 0) return;
+
+            const tempCanvas = document.createElement('canvas'); tempCanvas.width = 200; tempCanvas.height = 200;
+            const ctx = tempCanvas.getContext('2d');
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 200, 200);
+
+            let minX=10000, minY=10000, maxX=0, maxY=0;
+            selectedObjs.forEach(obj => {
+                if(obj.type === 'stroke') { obj.points.forEach(pt => { if(pt.x<minX)minX=pt.x; if(pt.y<minY)minY=pt.y; if(pt.x>maxX)maxX=pt.x; if(pt.y>maxY)maxY=pt.y; }); }
+                else if(obj.type === 'image') { if(obj.x<minX)minX=obj.x; if(obj.y<minY)minY=obj.y; if(obj.x+obj.width>maxX)maxX=obj.x+obj.width; if(obj.y+obj.height>maxY)maxY=obj.y+obj.height; }
+            });
+            const w = maxX - minX || 100, h = maxY - minY || 100; const scale = Math.min(180 / w, 180 / h);
+
+            ctx.save(); ctx.translate(100 - (minX + w/2)*scale, 100 - (minY + h/2)*scale); ctx.scale(scale, scale);
+            selectedObjs.forEach(obj => {
+                if (obj.type === 'image' && imageCache[obj.id]) { ctx.drawImage(imageCache[obj.id], obj.x, obj.y, obj.width, obj.height); } 
+                else if(obj.type === 'stroke' && obj.points.length > 0) {
+                    ctx.beginPath(); ctx.strokeStyle = obj.color; ctx.lineWidth = obj.size; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+                    ctx.moveTo(obj.points[0].x, obj.points[0].y); obj.points.forEach(pt => ctx.lineTo(pt.x, pt.y)); ctx.stroke();
+                }
+            });
+            ctx.restore();
+
+            stickerData.items.push({ id: 'st_' + Date.now(), groupId: stickerData.activeGroupId || stickerData.groups[0].id, dataUrl: tempCanvas.toDataURL(), objects: selectedObjs });
+            saveData(); alert('Стикер успешно сохранён в текущую папку!');
+            
+            document.getElementById('lasso-floating-menu').style.display = 'none'; selectedObjectsIndices = [];
+            const uiCtx = document.getElementById(`ui-canvas-${activePageIndex}`).getContext('2d'); uiCtx.clearRect(0,0,794,1123);
             renderPageObjects(activePageIndex);
         }
 
-        function redoAction() {
-            const pageObj = currentNotebook.pages[activePageIndex];
-            if (!pageObj || !pageObj.redoStack || pageObj.redoStack.length === 0) return;
-            const restored = pageObj.redoStack.pop();
-            pageObj.objects.push(restored);
-            saveData();
-            renderPageObjects(activePageIndex);
+        function openStickersModal() {
+            renderStickerGroups();
+            renderStickersGrid();
+            document.getElementById('stickers-modal').style.display = 'flex';
         }
 
+        function insertStickerToPage(stickerId) {
+            const sticker = stickerData.items.find(i => i.id === stickerId);
+            if (!sticker || !sticker.objects) return;
+            const pageObj = currentNotebook.pages[activePageIndex];
+            
+            sticker.objects.forEach(obj => {
+                const cloned = JSON.parse(JSON.stringify(obj));
+                cloned.id = 'obj_' + Math.random();
+                if(cloned.points) cloned.points.forEach(pt => { pt.x += 50; pt.y += 50; });
+                if(cloned.type === 'image') { cloned.x += 50; cloned.y += 50; }
+                pageObj.objects.push(cloned);
+            });
+
+            saveData(); renderPageObjects(activePageIndex);
+            document.getElementById('stickers-modal').style.display = 'none';
+            handleToolBtnClick('lasso'); 
+        }
+
+        // ОТРИСОВКА ВСЕХ ОБЪЕКТОВ
         function renderPageObjects(pageIdx) {
             const pageObj = currentNotebook.pages[pageIdx]; if(!pageObj) return;
             const hlCtx = document.getElementById(`hl-canvas-${pageIdx}`).getContext('2d');
@@ -1005,295 +1124,46 @@
 
             hlCtx.clearRect(0, 0, 794, 1123); penCtx.clearRect(0, 0, 794, 1123); uiCtx.clearRect(0, 0, 794, 1123);
 
-            pageObj.objects.forEach(obj => {
+            pageObj.objects.forEach((obj, idx) => {
                 const targetCtx = (obj.tool === 'highlighter') ? hlCtx : penCtx;
-                targetCtx.beginPath(); targetCtx.strokeStyle = obj.color; targetCtx.lineCap = 'round'; targetCtx.lineJoin = 'round';
-                targetCtx.globalAlpha = getToolAlpha(obj.tool, obj.subtype);
+                targetCtx.save();
+                
+                const applyScale = obj.tempScale ? (obj.scale || 1) * obj.tempScale : (obj.scale || 1);
+                if(applyScale !== 1) { targetCtx.translate(obj.cx || obj.x, obj.cy || obj.y); targetCtx.scale(applyScale, applyScale); targetCtx.translate(-(obj.cx || obj.x), -(obj.cy || obj.y)); }
 
-                if(obj.type === 'shape') {
-                    targetCtx.lineWidth = obj.size;
-                    if(obj.shape.type === 'line') { targetCtx.moveTo(obj.shape.start.x, obj.shape.start.y); targetCtx.lineTo(obj.shape.end.x, obj.shape.end.y); }
-                    else { targetCtx.ellipse(obj.shape.cx, obj.shape.cy, obj.shape.rx, obj.shape.ry, 0, 0, Math.PI*2); }
-                    targetCtx.stroke();
-                } else if(obj.type === 'stroke' && obj.points.length > 0) {
-                    if(obj.points.length === 1) { targetCtx.lineWidth = obj.size * (obj.points[0].p*2); targetCtx.moveTo(obj.points[0].x, obj.points[0].y); targetCtx.lineTo(obj.points[0].x+0.1, obj.points[0].y); targetCtx.stroke(); }
-                    else {
-                        for(let i=1; i<obj.points.length; i++) {
-                            targetCtx.beginPath(); targetCtx.moveTo(obj.points[i-1].x, obj.points[i-1].y); targetCtx.lineTo(obj.points[i].x, obj.points[i].y);
-                            let w = obj.size; if(obj.tool === 'pen' && penState.pressure > 0) w = obj.size * (obj.points[i].p * 2);
-                            targetCtx.lineWidth = w; targetCtx.stroke();
+                if (obj.type === 'image') {
+                    if (imageCache[obj.id]) {
+                        targetCtx.drawImage(imageCache[obj.id], obj.x, obj.y, obj.width, obj.height);
+                        if(selectedObjectsIndices.includes(idx)) {
+                            uiCtx.save(); if(applyScale !== 1) { uiCtx.translate(obj.cx, obj.cy); uiCtx.scale(applyScale, applyScale); uiCtx.translate(-obj.cx, -obj.cy); }
+                            uiCtx.strokeStyle = '#2383e2'; uiCtx.lineWidth = 2; uiCtx.setLineDash([4, 4]); uiCtx.strokeRect(obj.x, obj.y, obj.width, obj.height); uiCtx.restore();
+                        }
+                    } else {
+                        const img = new Image(); img.onload = () => { imageCache[obj.id] = img; renderPageObjects(pageIdx); }; img.src = obj.dataUrl;
+                    }
+                } else {
+                    targetCtx.beginPath(); targetCtx.strokeStyle = obj.color; targetCtx.lineCap = 'round'; targetCtx.lineJoin = 'round'; targetCtx.globalAlpha = getToolAlpha(obj.tool, obj.subtype);
+                    if(selectedObjectsIndices.includes(idx)) targetCtx.strokeStyle = '#2383e2';
+
+                    if(obj.type === 'shape') {
+                        targetCtx.lineWidth = obj.size;
+                        if(obj.shape.type === 'line') { targetCtx.moveTo(obj.shape.start.x, obj.shape.start.y); targetCtx.lineTo(obj.shape.end.x, obj.shape.end.y); }
+                        else { targetCtx.ellipse(obj.shape.cx, obj.shape.cy, obj.shape.rx, obj.shape.ry, 0, 0, Math.PI*2); }
+                        targetCtx.stroke();
+                    } else if(obj.type === 'stroke' && obj.points.length > 0) {
+                        if(obj.points.length === 1) { targetCtx.lineWidth = obj.size * (obj.points[0].p*2); targetCtx.moveTo(obj.points[0].x, obj.points[0].y); targetCtx.lineTo(obj.points[0].x+0.1, obj.points[0].y); targetCtx.stroke(); }
+                        else {
+                            for(let i=1; i<obj.points.length; i++) {
+                                targetCtx.beginPath(); targetCtx.moveTo(obj.points[i-1].x, obj.points[i-1].y); targetCtx.lineTo(obj.points[i].x, obj.points[i].y);
+                                let w = obj.size; if(obj.tool === 'pen' && penState.pressure > 0) w = obj.size * (obj.points[i].p * 2);
+                                targetCtx.lineWidth = w; targetCtx.stroke();
+                            }
                         }
                     }
                 }
+                targetCtx.restore();
             });
         }
-
-        function applyEraserOnPage(pos, pageIdx) {
-            const pageObj = currentNotebook.pages[pageIdx]; if (!pageObj || !pageObj.objects) return;
-            const eraserRadius = eraserState.size / 2; const newObjects = [];
-            pageObj.objects.forEach(obj => {
-                let canErase = false;
-                if (obj.tool === 'highlighter' && eraserState.filters.highlighter) canErase = true;
-                if (obj.tool === 'pen' && (obj.subtype === 'ballpoint' || !obj.subtype) && eraserState.filters.ballpoint) canErase = true;
-                if (obj.tool === 'pen' && obj.subtype === 'fountain' && eraserState.filters.fountain) canErase = true;
-                if (obj.tool === 'pen' && obj.subtype === 'pencil' && eraserState.filters.pencil) canErase = true;
-
-                if (!canErase) { newObjects.push(obj); return; }
-
-                if (obj.type === 'shape') {
-                    let dist = 10000;
-                    if(obj.shape.type === 'line') { const mx = (obj.shape.start.x + obj.shape.end.x)/2; const my = (obj.shape.start.y + obj.shape.end.y)/2; dist = Math.hypot(mx-pos.x, my-pos.y); }
-                    else if(obj.shape.type === 'ellipse') { dist = Math.hypot(obj.shape.cx-pos.x, obj.shape.cy-pos.y); }
-                    if (dist > eraserRadius + 20) newObjects.push(obj); return;
-                }
-                if(obj.type === 'stroke') {
-                    let currentSegment = [];
-                    obj.points.forEach(pt => {
-                        if (Math.hypot(pt.x-pos.x, pt.y-pos.y) < eraserRadius) { if (currentSegment.length > 0) { newObjects.push({ ...obj, id: 'str_' + Math.random(), points: currentSegment }); currentSegment = []; } }
-                        else { currentSegment.push(pt); }
-                    });
-                    if (currentSegment.length > 0) newObjects.push({ ...obj, id: 'str_' + Math.random(), points: currentSegment });
-                }
-            });
-            pageObj.objects = newObjects; saveData(); renderPageObjects(pageIdx);
-        }
-
-        // РАБОТА С ЦВЕТАМИ, ПАЛИТРОЙ И ПИПЕТКОЙ
-        function renderQuickSwatchesBar() { 
-            const container = document.getElementById('quick-swatches-container'); 
-            const activeSwatches = (currentTool === 'highlighter') ? highlighterSwatches : penSwatches; 
-            const activeSelected = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch; 
-            
-            container.innerHTML = activeSwatches.map((hex, idx) => `
-                <div class="swatch-circle ${hex === activeSelected ? 'active' : ''}" 
-                     style="background-color:${hex}" 
-                     onclick="handleSwatchClick('${hex}', ${idx})" 
-                     oncontextmenu="removeSwatch(event, '${hex}')"
-                     title="Клик — выбрать, ПКМ / долгий тап — удалить"></div>
-            `).join(''); 
-        }
-
-        function handleSwatchClick(hex, index) { 
-            if (currentTool === 'highlighter') selectedHlSwatch = hex; else selectedPenSwatch = hex; 
-            renderQuickSwatchesBar(); 
-        }
-
-        function removeSwatch(e, hex) {
-            e.preventDefault();
-            const targetSwatches = (currentTool === 'highlighter') ? highlighterSwatches : penSwatches;
-            if (targetSwatches.length <= 1) { alert('Нужно оставить хотя бы один цвет в палитре!'); return; }
-            const idx = targetSwatches.indexOf(hex);
-            if (idx > -1) {
-                targetSwatches.splice(idx, 1);
-                if (currentTool === 'highlighter' && selectedHlSwatch === hex) selectedHlSwatch = highlighterSwatches[0];
-                if (currentTool !== 'highlighter' && selectedPenSwatch === hex) selectedPenSwatch = penSwatches[0];
-                saveData();
-                renderQuickSwatchesBar();
-            }
-        }
-
-        function openAddSwatchPrompt() {
-            const targetSwatches = (currentTool === 'highlighter') ? highlighterSwatches : penSwatches;
-            if (targetSwatches.length >= 20) { alert('Максимум 20 цветов в палитре!'); return; }
-            
-            const input = document.createElement('input');
-            input.type = 'color';
-            input.value = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch;
-            input.onchange = (e) => {
-                const newColor = e.target.value;
-                if (!targetSwatches.includes(newColor)) {
-                    targetSwatches.push(newColor);
-                    if (currentTool === 'highlighter') selectedHlSwatch = newColor; else selectedPenSwatch = newColor;
-                    saveData();
-                    renderQuickSwatchesBar();
-                }
-            };
-            input.click();
-        }
-
-        function toggleEyedropper() {
-            isEyedropperActive = !isEyedropperActive;
-            const btn = document.getElementById('tool-eyedropper');
-            if (isEyedropperActive) {
-                btn.style.background = '#2383e2';
-                btn.style.color = 'white';
-                alert('Пипетка включена! Кликните на любой штрих на странице, чтобы взять его цвет.');
-            } else {
-                btn.style.background = '';
-                btn.style.color = '';
-            }
-        }
-
-        function pickColorFromCanvas(pageIdx, x, y) {
-            const pageObj = currentNotebook.pages[pageIdx];
-            if (!pageObj || !pageObj.objects) return;
-            
-            let pickedColor = null;
-            // Ищем объект под курсором в обратном порядке (сверху вниз)
-            for (let i = pageObj.objects.length - 1; i >= 0; i--) {
-                const obj = pageObj.objects[i];
-                if (obj.type === 'stroke') {
-                    const found = obj.points.some(pt => Math.hypot(pt.x - x, pt.y - y) < (obj.size / 2 + 5));
-                    if (found) { pickedColor = obj.color; break; }
-                }
-            }
-
-            if (pickedColor) {
-                const targetSwatches = (currentTool === 'highlighter') ? highlighterSwatches : penSwatches;
-                if (!targetSwatches.includes(pickedColor)) {
-                    if (targetSwatches.length < 20) targetSwatches.push(pickedColor);
-                }
-                if (currentTool === 'highlighter') selectedHlSwatch = pickedColor; else selectedPenSwatch = pickedColor;
-                saveData();
-                renderQuickSwatchesBar();
-                alert(`Цвет ${pickedColor} успешно добавлен в палитру и выбран!`);
-            } else {
-                alert('Тут нет штрихов, попробуйте кликнуть прямо по рисунку.');
-            }
-
-            isEyedropperActive = false;
-            document.getElementById('tool-eyedropper').style.background = '';
-            document.getElementById('tool-eyedropper').style.color = '';
-        }
-        
-        function closeAllPopovers() {
-            document.querySelectorAll('.gn-popover-panel').forEach(p => p.style.display = 'none');
-        }
-
-        function handleToolBtnClick(t) { 
-            const popovers = { 'pen': 'pen-popover-panel', 'highlighter': 'marker-popover-panel', 'eraser': 'eraser-popover-panel', 'template': 'template-popover-panel' };
-            const isAlreadyOpen = document.getElementById(popovers[t]) && document.getElementById(popovers[t]).style.display === 'flex';
-            
-            closeAllPopovers();
-            document.querySelectorAll('.gn-tool-icon-btn').forEach(b => b.classList.remove('active'));
-
-            if (!isAlreadyOpen) {
-                document.getElementById('tool-' + t).classList.add('active');
-                if (popovers[t]) document.getElementById(popovers[t]).style.display = 'flex';
-            } else {
-                document.getElementById('tool-' + (currentTool||'pen')).classList.add('active');
-            }
-            if(t !== 'template') currentTool = t;
-            isEyedropperActive = false;
-            document.getElementById('tool-eyedropper').style.background = '';
-            document.getElementById('tool-eyedropper').style.color = '';
-            renderQuickSwatchesBar();
-        }
-
-        function setPenSubtype(sub) { penState.subtype = sub; document.querySelectorAll('#pen-popover-panel .pen-tab-btn').forEach(b => b.classList.remove('active')); document.getElementById('tab-' + sub).classList.add('active'); saveData(); }
-        function updatePenSize(val) { penState.size = parseInt(val); document.getElementById('val-pen-size').innerText = val + ' px'; saveData(); }
-        function updatePenSetting(k, val) { penState[k] = parseInt(val); document.getElementById('val-'+k).innerText = val + '%'; saveData(); }
-        function updateMarkerSize(val) { markerState.size = parseInt(val); document.getElementById('val-marker-size').innerText = val + ' px'; saveData(); }
-        function updateEraserSize(val) { eraserState.size = parseInt(val); document.getElementById('val-eraser-size').innerText = val + ' px'; saveData(); }
-        function updateEraserFilter(k, val) { eraserState.filters[k] = val; saveData(); }
-
-        function setPagePattern(pattern) {
-            const pageObj = currentNotebook.pages[activePageIndex];
-            if(pageObj) {
-                pageObj.pattern = pattern;
-                saveData();
-                renderAllPagesInScroll();
-                renderPagesSidebarList();
-            }
-        }
-
-        function setPageBgColor(color, el) {
-            const pageObj = currentNotebook.pages[activePageIndex];
-            if(pageObj) {
-                pageObj.bgColor = color;
-                if(el) {
-                    document.querySelectorAll('#template-popover-panel .pastel-opt').forEach(opt => opt.classList.remove('selected'));
-                    el.classList.add('selected');
-                }
-                saveData();
-                renderAllPagesInScroll();
-                renderPagesSidebarList();
-            }
-        }
-
-        function applyTemplateToAllPages() {
-            const curPage = currentNotebook.pages[activePageIndex];
-            if(!curPage) return;
-            currentNotebook.pages.forEach(p => {
-                p.pattern = curPage.pattern || 'grid';
-                p.bgColor = curPage.bgColor || '#ffffff';
-            });
-            saveData();
-            renderAllPagesInScroll();
-            renderPagesSidebarList();
-            alert('Шаблон применен ко всем страницам!');
-        }
-
-        function openExportModal() { document.getElementById('export-modal').style.display = 'flex'; }
-        
-        function exportNotebookAsImage() {
-            const pageObj = currentNotebook.pages[activePageIndex];
-            const paperEl = document.getElementById(`paper-page-${activePageIndex}`);
-            if(!paperEl) return;
-
-            const exportCanvas = document.createElement('canvas'); exportCanvas.width = 794; exportCanvas.height = 1123;
-            const eCtx = exportCanvas.getContext('2d');
-            
-            eCtx.fillStyle = pageObj.bgColor || '#ffffff';
-            eCtx.fillRect(0,0,794,1123);
-
-            const hlCanvas = document.getElementById(`hl-canvas-${activePageIndex}`);
-            const penCanvas = document.getElementById(`pen-canvas-${activePageIndex}`);
-
-            eCtx.drawImage(hlCanvas, 0, 0); 
-            eCtx.drawImage(penCanvas, 0, 0);
-
-            const link = document.createElement('a'); 
-            link.download = (currentNotebook ? currentNotebook.name : 'notebook') + `_стр_${activePageIndex+1}.png`; 
-            link.href = exportCanvas.toDataURL(); 
-            link.click();
-            document.getElementById('export-modal').style.display = 'none';
-        }
-
-        function exportNotebookAsPDF() { document.getElementById('export-modal').style.display = 'none'; window.print(); }
-        function shareNotebook() { if (navigator.share) { navigator.share({ title: currentNotebook ? currentNotebook.name : 'Блокнот', text: 'Блокнот из приложения!' }).catch(err => console.log(err)); } else { alert('Не поддерживается браузером'); } document.getElementById('export-modal').style.display = 'none'; }
     </script>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
-        import { getFirestore, enableIndexedDbPersistence, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
-
-        const firebaseConfig = window.firebaseConfig;
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
-
-        enableIndexedDbPersistence(db).catch((err) => { console.log("Оффлайн режим: ", err.code); });
-        window.db = db; let currentUserUid = null;
-
-        window.loginWithGoogle = () => { signInWithPopup(auth, provider).catch((error) => alert("Ошибка: " + error.message)); };
-        window.logoutGoogle = () => { signOut(auth).catch((error) => alert("Ошибка: " + error.message)); };
-
-        window.syncDataToFirebase = async () => {
-            if (!currentUserUid) return;
-            try { const userDocRef = doc(db, "users", currentUserUid); await setDoc(userDocRef, { appData: JSON.stringify(appData), updatedAt: new Date().toISOString() }); } 
-            catch (e) { console.log("Сохранено локально."); }
-        };
-
-        onAuthStateChanged(auth, async (user) => {
-            const btn = document.getElementById("auth-btn"); const nameLabel = document.getElementById("auth-user-name");
-            if (user) {
-                currentUserUid = user.uid; nameLabel.innerText = "Привет, " + user.displayName + "!";
-                btn.innerText = "🚪 Выйти"; btn.onclick = window.logoutGoogle; btn.style.backgroundColor = "#d32f2f"; btn.style.color = "white";
-                try {
-                    const userDocRef = doc(db, "users", user.uid); const docSnap = await getDoc(userDocRef);
-                    if (docSnap.exists()) { const cloudData = docSnap.data(); if (cloudData.appData) { appData = JSON.parse(cloudData.appData); localStorage.setItem('schedule_data_v15', JSON.stringify(appData)); renderFolders(); renderCalendar(); } } 
-                    else { window.syncDataToFirebase(); }
-                } catch (e) { console.log("Оффлайн-режим"); }
-            } else {
-                currentUserUid = null; nameLabel.innerText = "Firebase"; btn.innerText = "🌐 Войти"; btn.onclick = window.loginWithGoogle; btn.style.backgroundColor = "#2383e2"; btn.style.color = "white";
-            }
-        });
-    </script>
-<script>
-  if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').then((reg) => console.log('SW зарегистрирован')).catch((err) => console.log('Ошибка SW:', err)); }); }
-</script>
 </body>
 </html>
