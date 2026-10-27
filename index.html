@@ -108,15 +108,10 @@
         .gn-tool-icon-btn.active { background: #e2ebe5; border-color: #a2c7b0; font-weight: 700; color: #1b4d2e; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
         [data-theme="dark"] .gn-tool-icon-btn.active { background: #1c3829; border-color: #2a5a40; color: #94e3b5; }
 
-        .quick-swatches-bar { display: flex; align-items: center; gap: 5px; padding: 4px 8px; background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border-color); overflow-x: auto; max-width: 350px;}
-        .swatch-circle { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; transition: transform 0.15s;}
+        .quick-swatches-bar { display: flex; align-items: center; gap: 6px; padding: 4px 8px; background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border-color); max-width: 320px; overflow-x: auto; }
+        .swatch-circle { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; transition: transform 0.15s; position: relative;}
         .swatch-circle:hover { transform: scale(1.2); }
-        .swatch-circle.active { border-color: var(--text-main); transform: scale(1.25); box-shadow: 0 0 4px rgba(0,0,0,0.3); }
-        .add-swatch-btn { width: 20px; height: 20px; border-radius: 50%; border: 2px dashed var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; flex-shrink: 0; color: var(--text-muted); background: transparent;}
-        .add-swatch-btn:hover { border-color: var(--text-main); color: var(--text-main); }
-        .eyedropper-btn { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border-color); background: var(--card-bg); display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; flex-shrink: 0; }
-        .eyedropper-btn:hover { background: var(--hover-bg); }
-        .eyedropper-btn.active { background: #2383e2; color: white; border-color: #2383e2; }
+        .swatch-circle.active { border-color: var(--text-main); transform: scale(1.25); }
 
         /* ПОПОВЕРЫ */
         .gn-popover-panel { display: none; position: absolute; top: 100%; left: 16px; margin-top: 6px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px; box-shadow: 0 12px 36px rgba(0,0,0,0.18); z-index: 1000; width: 320px; flex-direction: column; gap: 14px; font-size: 13px;}
@@ -140,10 +135,10 @@
         input:checked + .gn-slider-toggle:before { transform: translateX(18px); }
 
         /* ВЕРТИКАЛЬНЫЙ СВИТОК СТРАНИЦ */
-        .nb-canvas-container { flex-grow: 1; overflow-y: auto; overflow-x: auto; padding: 40px 20px; position: relative; touch-action: pan-y;}
-        .nb-pages-wrapper { display: flex; flex-direction: column; align-items: center; gap: 30px; margin: 0 auto; width: 100%; }
+        .nb-canvas-container { flex-grow: 1; overflow: auto; padding: 40px 20px; position: relative; touch-action: pan-x pan-y; }
+        .nb-pages-wrapper { display: flex; flex-direction: column; align-items: center; gap: 30px; margin: 0 auto; width: 794px; transform-origin: top center; transition: transform 0.1s ease-out; }
         
-        .nb-page-paper { background-color: #ffffff; box-shadow: 0 8px 24px rgba(0,0,0,0.12); border-radius: 4px; position: relative; width: 794px; height: 1123px; border: 1px solid var(--border-color); flex-shrink: 0; transform-origin: top center; background-repeat: repeat;}
+        .nb-page-paper { background-color: #ffffff; box-shadow: 0 8px 24px rgba(0,0,0,0.12); border-radius: 4px; position: relative; width: 794px; height: 1123px; border: 1px solid var(--border-color); flex-shrink: 0; background-repeat: repeat;}
         .page-badge-label { position: absolute; right: -50px; top: 10px; background: rgba(0,0,0,0.4); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; pointer-events: none;}
 
         canvas.layer-canvas { position: absolute; top: 0; left: 0; touch-action: none; border-radius: 4px;}
@@ -172,7 +167,7 @@
         @media print {
             body * { visibility: hidden; }
             .nb-pages-wrapper, .nb-pages-wrapper * { visibility: visible; }
-            .nb-pages-wrapper { position: absolute; left: 0; top: 0; width: 100%; }
+            .nb-pages-wrapper { position: absolute; left: 0; top: 0; width: 100%; transform: none !important; }
             .nb-page-paper { page-break-after: always; margin: 0; box-shadow: none; border: none; }
             @page { size: A4; margin: 0; }
         }
@@ -181,7 +176,6 @@
 <body>
 
     <input type="file" id="pdf-file-input" accept="application/pdf" style="display:none;" onchange="handlePDFUpload(event)">
-    <input type="color" id="hidden-color-picker" style="display:none;" onchange="onCustomColorPicked(event)">
 
     <!-- САЙДБАР -->
     <div class="sidebar">
@@ -244,11 +238,7 @@
                         <span id="nb-page-num-display" style="font-size:13px; font-weight:700; background:var(--sidebar-bg); padding:4px 10px; border-radius:6px; border:1px solid var(--border-color);">Стр. 1 из 1</span>
                         <span id="nb-title-text" style="margin-left: 10px;">Блокнот</span>
                     </div>
-                    <div style="display:flex; gap:8px;">
-                        <button class="secondary-btn" title="Отменить" onclick="undoActivePage()">↩</button>
-                        <button class="secondary-btn" title="Вернуть" onclick="redoActivePage()">↪</button>
-                        <button class="secondary-btn" onclick="openExportModal()">📤 Экспорт</button>
-                    </div>
+                    <button class="secondary-btn" onclick="openExportModal()">📤 Экспорт</button>
                 </div>
 
                 <div class="nb-tools-bar" id="nb-tools-bar">
@@ -258,8 +248,15 @@
                     <button class="gn-tool-icon-btn" id="tool-template" onclick="handleToolBtnClick('template')">📄 Шаблон</button>
 
                     <span style="border-left:1px solid var(--border-color); height:20px; margin:0 4px;"></span>
+                    
+                    <!-- КНОПКИ UNDO / REDO -->
+                    <button class="gn-tool-icon-btn" onclick="undoAction()" title="Отменить штрих">↩️</button>
+                    <button class="gn-tool-icon-btn" onclick="redoAction()" title="Вернуть штрих">↪️</button>
+
+                    <span style="border-left:1px solid var(--border-color); height:20px; margin:0 4px;"></span>
                     <div class="quick-swatches-bar" id="quick-swatches-container"></div>
-                    <div class="eyedropper-btn" id="eyedropper-btn" title="Пипетка цвета" onclick="toggleEyedropper()">🧪</div>
+                    <button class="gn-tool-icon-btn" onclick="openAddSwatchPrompt()" title="Добавить цвет">+</button>
+                    <button class="gn-tool-icon-btn" id="tool-eyedropper" onclick="toggleEyedropper()" title="Пипетка">🧪</button>
 
                     <!-- ПОПОВЕР РУЧКИ -->
                     <div class="gn-popover-panel" id="pen-popover-panel" onclick="event.stopPropagation()">
@@ -326,7 +323,7 @@
 
                 </div>
 
-                <!-- КОНТЕЙНЕР БЕСКОНЕЧНОГО ВЕРТИКАЛЬНОГО СВИТОКА -->
+                <!-- КОНТЕЙНЕР БЕСКОНЕЧНОГО ВЕРТИКАЛЬНОГО СВИТКА -->
                 <div class="nb-canvas-container" id="nb-scroll-container">
                     <div class="nb-pages-wrapper" id="nb-pages-wrapper"></div>
                 </div>
@@ -447,8 +444,8 @@
         let selectedFolderIcon = standardEmojiList[0]; let selectedFolderColor = taskPastelColors[0];
         let selectedTaskIcon = standardEmojiList[11]; let selectedTaskColor = taskPastelColors[0];
 
-        let penSwatches = JSON.parse(localStorage.getItem('pen_swatches_v20')) || ['#37352f', '#d32f2f', '#1976d2', '#388e3c', '#f57c00', '#7b1fa2', '#e91e63', '#009688', '#ffeb3b', '#795548', '#607d8b'];
-        let highlighterSwatches = JSON.parse(localStorage.getItem('hl_swatches_v20')) || ['#ffe0b2', '#fff9c4', '#c8e6c9', '#b3e5fc', '#f8bbd0', '#e1bee7', '#d1c4e9'];
+        let penSwatches = JSON.parse(localStorage.getItem('pen_swatches_v20')) || ['#37352f', '#d32f2f', '#1976d2', '#388e3c', '#f57c00'];
+        let highlighterSwatches = JSON.parse(localStorage.getItem('hl_swatches_v20')) || ['#ffe0b2', '#fff9c4', '#c8e6c9', '#b3e5fc', '#f8bbd0'];
         let selectedPenSwatch = penSwatches[0]; let selectedHlSwatch = highlighterSwatches[0];
         let isEyedropperActive = false;
 
@@ -458,7 +455,6 @@
 
         let appData = JSON.parse(localStorage.getItem('schedule_data_v15')) || { folders: [{ id: 'f1', name: 'Учеба', icon: '🎓', color: '#BAE1FF' }], tasks: [], files: [], theme: 'light' };
 
-        // INDEXEDDB ХРАНИЛИЩЕ
         const DB_NAME = 'GoodNotesAppDB';
         const DB_VERSION = 1;
         const STORE_NAME = 'app_store';
@@ -504,11 +500,11 @@
         async function saveData() { 
             try { localStorage.setItem('schedule_data_v15', JSON.stringify(appData)); } catch (e) {}
             await setIDBItem('schedule_data_v15', appData);
-            localStorage.setItem('pen_swatches_v20', JSON.stringify(penSwatches));
-            localStorage.setItem('hl_swatches_v20', JSON.stringify(highlighterSwatches));
             localStorage.setItem('pen_state_v15', JSON.stringify(penState));
             localStorage.setItem('marker_state_v15', JSON.stringify(markerState));
             localStorage.setItem('eraser_state_v15', JSON.stringify(eraserState));
+            localStorage.setItem('pen_swatches_v20', JSON.stringify(penSwatches));
+            localStorage.setItem('hl_swatches_v20', JSON.stringify(highlighterSwatches));
             if (window.syncDataToFirebase) window.syncDataToFirebase();
         }
 
@@ -548,7 +544,6 @@
             document.getElementById('task-color-row').innerHTML = taskPastelColors.map(c => `<div class="pastel-opt ${c===selectedTaskColor?'selected':''}" style="background:${c}" onclick="selectedTaskColor='${c}';initPastelPickers();"></div>`).join(''); 
         }
 
-        // ПАПКИ
         function renderFolders() { const list = document.getElementById('folders-list'); list.innerHTML = ''; appData.folders.forEach(f => { const div = document.createElement('div'); div.className = 'sidebar-item'; div.onclick = () => openFolderView(f.id); div.oncontextmenu = (e) => { e.preventDefault(); contextTargetFolderId = f.id; document.getElementById('ctx-folder-title').innerText = f.name; document.getElementById('folder-context-modal').style.display = 'flex'; }; div.innerHTML = `<div class="sidebar-item-content"><span>${f.icon||'📁'}</span><span>${f.name}</span></div><div class="folder-badge" style="background:${f.color||'#BAE1FF'}"></div>`; list.appendChild(div); }); }
         function openFolderModal() { editingFolderId = null; document.getElementById('folder-name-input').value = ''; document.getElementById('folder-modal').style.display = 'flex'; }
         function saveFolder() { const name = document.getElementById('folder-name-input').value || 'Новая папка'; if(editingFolderId) { const f = appData.folders.find(x => x.id === editingFolderId); if(f) { f.name = name; f.icon = selectedFolderIcon; f.color = selectedFolderColor; } } else appData.folders.push({ id: 'f_' + Date.now(), name, icon: selectedFolderIcon, color: selectedFolderColor }); saveData(); renderFolders(); document.getElementById('folder-modal').style.display = 'none'; }
@@ -617,7 +612,7 @@
         }
 
         function openCreateNotebookModal() { document.getElementById('notebook-modal').style.display = 'flex'; }
-        function saveAndLaunchNotebook() { const title = document.getElementById('nb-input-title').value || 'Блокнот'; const newNb = { id: 'nb_'+Date.now(), folderId: contextTargetFolderId, type: 'notebook', name: title, pages: [{ id: 'p_1', pattern: 'grid', bgColor: '#ffffff', objects: [], undoStack: [] }] }; appData.files.push(newNb); saveData(); document.getElementById('notebook-modal').style.display = 'none'; renderFolderViewData(); launchNotebookStudio(newNb.id); }
+        function saveAndLaunchNotebook() { const title = document.getElementById('nb-input-title').value || 'Блокнот'; const newNb = { id: 'nb_'+Date.now(), folderId: contextTargetFolderId, type: 'notebook', name: title, pages: [{ id: 'p_1', pattern: 'grid', bgColor: '#ffffff', objects: [] }] }; appData.files.push(newNb); saveData(); document.getElementById('notebook-modal').style.display = 'none'; renderFolderViewData(); launchNotebookStudio(newNb.id); }
 
         function triggerPDFImport() { document.getElementById('pdf-file-input').click(); }
         async function handlePDFUpload(event) {
@@ -640,7 +635,7 @@
                     tempCanvas.height = viewport.height;
                     await page.render({ canvasContext: tempCtx, viewport: viewport }).promise;
                     const bgDataUrl = tempCanvas.toDataURL('image/jpeg', 0.8);
-                    newPages.push({ id: 'p_' + Date.now() + '_' + pageNum, bgImage: bgDataUrl, pattern: 'blank', bgColor: '#ffffff', objects: [], undoStack: [] });
+                    newPages.push({ id: 'p_' + Date.now() + '_' + pageNum, bgImage: bgDataUrl, pattern: 'blank', bgColor: '#ffffff', objects: [] });
                 }
                 const newNb = { id: 'nb_' + Date.now(), folderId: contextTargetFolderId, type: 'notebook', name: file.name.replace('.pdf', ''), pages: newPages };
                 appData.files.push(newNb); saveData(); renderFolderViewData(); launchNotebookStudio(newNb.id);
@@ -648,7 +643,6 @@
             finally { event.target.value = ''; }
         }
 
-        // КАЛЕНДАРЬ И ЗАДАЧИ
         function showMonthView() { document.getElementById('week-view').style.display = 'none'; document.getElementById('folder-view').style.display = 'none'; document.getElementById('notebook-studio').style.display = 'none'; document.getElementById('back-btn').style.display = 'none'; document.getElementById('month-view').style.display = 'flex'; renderCalendar(); }
         function renderCalendar() { const year = currentDate.getFullYear(); const month = currentDate.getMonth(); document.getElementById('main-title').innerText = `${months[month]} ${year}`; const grid = document.getElementById('calendar-grid'); grid.innerHTML = '<div class="weekday">ПН</div><div class="weekday">ВТ</div><div class="weekday">СР</div><div class="weekday">ЧТ</div><div class="weekday">ПТ</div><div class="weekday">СБ</div><div class="weekday">ВС</div>'; const firstDayIndex = new Date(year, month, 1).getDay() || 7; const daysInMonth = new Date(year, month + 1, 0).getDate(); const prevMonthDays = new Date(year, month, 0).getDate(); const todayStr = getTodayStr(); for (let i = 1; i < firstDayIndex; i++) grid.appendChild(createDayCell(prevMonthDays - firstDayIndex + i + 1, true)); for (let i = 1; i <= daysInMonth; i++) { const dateObj = new Date(year, month, i); grid.appendChild(createDayCell(i, false, dateObj, dateToStr(dateObj) === todayStr, dateToStr(dateObj))); } const remaining = (7 - ((grid.children.length - 7) % 7)) % 7; for (let i = 1; i <= remaining; i++) grid.appendChild(createDayCell(i, true)); }
         function createDayCell(dayNum, isOtherMonth, dateObj = null, isToday = false, dateStr = '') { const cell = document.createElement('div'); cell.className = `day-cell ${isOtherMonth ? 'other-month' : ''}`; let html = `<div class="day-header"><div class="day-number">${dayNum}</div>${isToday?'<div class="today-indicator"></div>':''}</div>`; if (dateStr) { const dayTasks = appData.tasks.filter(t => t.date === dateStr); if (dayTasks.length > 0) html += `<div class="day-events-mini">` + dayTasks.slice(0,3).map(t => `<div class="mini-event-badge" style="background:${t.type==='event'?t.color:'transparent'}; border:${t.type==='task'?'1px solid '+t.color:'none'};"><span>${t.icon||'📌'}</span> <span>${t.text}</span></div>`).join('') + `</div>`; } cell.innerHTML = html; if(!isOtherMonth && dateObj) cell.onclick = () => showWeekView(dateObj); return cell; }
@@ -711,19 +705,21 @@
         function moveCurrentTaskFromCtx() { const t = appData.tasks.find(x => x.id === contextTargetTaskId); const moveVal = document.getElementById('ctx-move-select').value; if(t) { let d = new Date(t.date); if(moveVal === 'tomorrow') d.setDate(d.getDate()+1); if(moveVal === 'next_week') d.setDate(d.getDate()+7); t.date = dateToStr(d); saveData(); document.getElementById('task-context-modal').style.display = 'none'; showWeekView(currentWeekDate); } }
 
         // ==========================================================
-        // МНОГОСТРАНИЧНЫЙ ВЕРТИКАЛЬНЫЙ СВИТОК И ДВИЖОК РИСОВАНИЯ
+        // GOODNOTES STUDIO & ПЛАНШЕТНЫЕ ЖЕСТЫ
         // ==========================================================
         let currentNotebook = null; let activePageIndex = 0; let currentTool = 'pen';
         let isDrawing = false; let activeDrawingPageIdx = 0;
         let pointsBuffer = []; let holdTimer = null; let isSnapping = false; let snapShapeData = null;
         let scrollObserver = null;
+        let currentZoom = 1.0; let initialPinchDist = null;
 
         function launchNotebookStudio(nbId) {
             currentNotebook = appData.files.find(x => x.id === nbId);
             if(!currentNotebook.pages || currentNotebook.pages.length === 0) {
-                currentNotebook.pages = [{ id: 'p_1', pattern: 'grid', bgColor: '#ffffff', objects: [], undoStack: [] }];
+                currentNotebook.pages = [{ id: 'p_1', pattern: 'grid', bgColor: '#ffffff', objects: [] }];
             }
             activePageIndex = 0;
+            currentZoom = 1.0;
             document.getElementById('main-header-bar').style.display = 'none'; 
             document.getElementById('folder-view').style.display = 'none'; 
             document.querySelector('.sidebar').style.display = 'none';
@@ -734,6 +730,7 @@
             renderAllPagesInScroll();
             renderPagesSidebarList();
             setupScrollObserver();
+            setupPinchZoom();
             closeAllPopovers();
         }
 
@@ -767,7 +764,7 @@
             const lastPage = currentNotebook.pages[currentNotebook.pages.length - 1];
             const pattern = lastPage ? (lastPage.pattern || 'grid') : 'grid';
             const bgColor = lastPage ? (lastPage.bgColor || '#ffffff') : '#ffffff';
-            currentNotebook.pages.push({ id: 'p_' + Date.now(), pattern: pattern, bgColor: bgColor, objects: [], undoStack: [] }); 
+            currentNotebook.pages.push({ id: 'p_' + Date.now(), pattern: pattern, bgColor: bgColor, objects: [] }); 
             saveData(); 
             renderAllPagesInScroll(); 
             renderPagesSidebarList();
@@ -857,6 +854,41 @@
             });
         }
 
+        // ПИНЧ-ТУ-ЗУМ ДВУМЯ ПАЛЬЦАМИ
+        function setupPinchZoom() {
+            const container = document.getElementById('nb-scroll-container');
+            const wrapper = document.getElementById('nb-pages-wrapper');
+            let activeTouches = 0;
+
+            container.addEventListener('touchstart', (e) => {
+                activeTouches = e.touches.length;
+                if (activeTouches === 2) {
+                    initialPinchDist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                }
+            }, { passive: true });
+
+            container.addEventListener('touchmove', (e) => {
+                if (activeTouches === 2 && initialPinchDist) {
+                    const currentDist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    const factor = currentDist / initialPinchDist;
+                    currentZoom = Math.min(Math.max(0.5, currentZoom * (factor > 1 ? 1.02 : 0.98)), 3.0);
+                    wrapper.style.transform = `scale(${currentZoom})`;
+                    initialPinchDist = currentDist;
+                }
+            }, { passive: true });
+
+            container.addEventListener('touchend', (e) => {
+                activeTouches = e.touches.length;
+                if (activeTouches < 2) initialPinchDist = null;
+            });
+        }
+
         // РИСОВАНИЕ И ПИПЕТКА
         function getToolAlpha(tool, subtype) { if(tool === 'highlighter') return 0.35; if(tool === 'pen' && subtype === 'pencil') return 0.4; return 1.0; }
         
@@ -869,73 +901,16 @@
             }; 
         }
 
-        function toggleEyedropper() {
-            isEyedropperActive = !isEyedropperActive;
-            const btn = document.getElementById('eyedropper-btn');
-            if(isEyedropperActive) {
-                btn.classList.add('active');
-                alert('Пипетка включена! Кликните в любое место страницы, чтобы скопировать цвет штриха или бумаги.');
-            } else {
-                btn.classList.remove('active');
-            }
-        }
-
-        function pickColorAt(pos, pageIdx) {
-            const hlCanvas = document.getElementById(`hl-canvas-${pageIdx}`);
-            const penCanvas = document.getElementById(`pen-canvas-${pageIdx}`);
-            const ctxHl = hlCanvas.getContext('2d');
-            const ctxPen = penCanvas.getContext('2d');
-            
-            const pxX = Math.floor(pos.x);
-            const pxY = Math.floor(pos.y);
-            
-            let p1 = ctxPen.getImageData(pxX, pxY, 1, 1).data;
-            if(p1[3] === 0) {
-                p1 = ctxHl.getImageData(pxX, pxY, 1, 1).data;
-            }
-            if(p1[3] === 0) {
-                const paperEl = document.getElementById(`paper-page-${pageIdx}`);
-                const computed = getComputedStyle(paperEl);
-                let bg = computed.backgroundColor;
-                if(bg) {
-                    const rgbMatch = bg.match(/\d+/g);
-                    if(rgbMatch && rgbMatch.length >= 3) {
-                        p1 = [parseInt(rgbMatch[0]), parseInt(rgbMatch[1]), parseInt(rgbMatch[2]), 255];
-                    }
-                }
-            }
-            
-            const hex = '#' + [p1[0], p1[1], p1[2]].map(x => {
-                const hexStr = x.toString(16);
-                return hexStr.length === 1 ? '0' + hexStr : hexStr;
-            }).join('');
-
-            const activeSwatches = (currentTool === 'highlighter') ? highlighterSwatches : penSwatches;
-            if(!activeSwatches.includes(hex) && activeSwatches.length < 20) {
-                activeSwatches.push(hex);
-            }
-            if(currentTool === 'highlighter') {
-                selectedHlSwatch = hex;
-            } else {
-                selectedPenSwatch = hex;
-            }
-
-            isEyedropperActive = false;
-            document.getElementById('eyedropper-btn').classList.remove('active');
-            renderQuickSwatchesBar();
-            alert('Цвет ' + hex + ' добавлен в палитру!');
-        }
-
         function startDrawingOnPage(e, pageIdx) {
             closeAllPopovers();
-            activeDrawingPageIdx = pageIdx;
             const pos = getCanvasCoordsForPage(e, pageIdx);
-            
-            if(isEyedropperActive) {
-                pickColorAt(pos, pageIdx);
+
+            if (isEyedropperActive) {
+                pickColorFromCanvas(pageIdx, Math.round(pos.x), Math.round(pos.y));
                 return;
             }
 
+            activeDrawingPageIdx = pageIdx;
             isDrawing = true;
             let pressure = e.pressure || 0.5; if(pressure===0) pressure=0.5;
             pointsBuffer = [{x: pos.x, y: pos.y, p: pressure}];
@@ -988,34 +963,38 @@
             if (currentTool === 'eraser') return;
             const curSize = (currentTool === 'highlighter') ? markerState.size : penState.size; const curColor = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch;
             const pageObj = currentNotebook.pages[pageIdx];
-            
-            let newObj = null;
+            if(!pageObj.redoStack) pageObj.redoStack = [];
+            pageObj.redoStack = []; // очищаем стек возврата при новом штрихе
+
             if(isSnapping) {
-                newObj = { id: 'shp_' + Date.now(), type: 'shape', shape: snapShapeData, tool: currentTool, subtype: penState.subtype, color: curColor, size: curSize };
+                pageObj.objects.push({ id: 'shp_' + Date.now(), type: 'shape', shape: snapShapeData, tool: currentTool, subtype: penState.subtype, color: curColor, size: curSize });
                 isSnapping = false; snapShapeData = null; 
             } else { 
-                newObj = { id: 'str_' + Date.now(), type: 'stroke', tool: currentTool, subtype: penState.subtype, color: curColor, size: curSize, points: pointsBuffer }; 
+                pageObj.objects.push({ id: 'str_' + Date.now(), type: 'stroke', tool: currentTool, subtype: penState.subtype, color: curColor, size: curSize, points: pointsBuffer }); 
             }
-            
-            pageObj.objects.push(newObj);
-            if(!pageObj.undoStack) pageObj.undoStack = [];
-            pageObj.undoStack.push(newObj);
-
             const uiCtx = document.getElementById(`ui-canvas-${pageIdx}`).getContext('2d');
             uiCtx.clearRect(0,0,794,1123);
             saveData(); renderPageObjects(pageIdx);
         }
 
-        function undoActivePage() {
+        // UNDO / REDO СТРЕЛКИ НА ПАНЕЛИ
+        function undoAction() {
             const pageObj = currentNotebook.pages[activePageIndex];
-            if(!pageObj || !pageObj.objects || pageObj.objects.length === 0) return;
-            pageObj.objects.pop();
+            if (!pageObj || !pageObj.objects || pageObj.objects.length === 0) return;
+            if (!pageObj.redoStack) pageObj.redoStack = [];
+            const removed = pageObj.objects.pop();
+            pageObj.redoStack.push(removed);
             saveData();
             renderPageObjects(activePageIndex);
         }
 
-        function redoActivePage() {
-            // Опционально возвращающие стертые/отмененные объекты
+        function redoAction() {
+            const pageObj = currentNotebook.pages[activePageIndex];
+            if (!pageObj || !pageObj.redoStack || pageObj.redoStack.length === 0) return;
+            const restored = pageObj.redoStack.pop();
+            pageObj.objects.push(restored);
+            saveData();
+            renderPageObjects(activePageIndex);
         }
 
         function renderPageObjects(pageIdx) {
@@ -1079,18 +1058,19 @@
             pageObj.objects = newObjects; saveData(); renderPageObjects(pageIdx);
         }
 
-        // РАСШИРЕННАЯ ПАЛИТРА (ДО 20 ЦВЕТОВ) И ПИПЕТКА
+        // РАБОТА С ЦВЕТАМИ, ПАЛИТРОЙ И ПИПЕТКОЙ
         function renderQuickSwatchesBar() { 
             const container = document.getElementById('quick-swatches-container'); 
             const activeSwatches = (currentTool === 'highlighter') ? highlighterSwatches : penSwatches; 
             const activeSelected = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch; 
             
-            let html = activeSwatches.map((hex, idx) => `<div class="swatch-circle ${hex === activeSelected ? 'active' : ''}" style="background-color:${hex}" onclick="handleSwatchClick('${hex}', ${idx})"></div>`).join('');
-            
-            if(activeSwatches.length < 20) {
-                html += `<div class="add-swatch-btn" title="Добавить цвет" onclick="openColorPickerForNewSwatch()">+</div>`;
-            }
-            container.innerHTML = html;
+            container.innerHTML = activeSwatches.map((hex, idx) => `
+                <div class="swatch-circle ${hex === activeSelected ? 'active' : ''}" 
+                     style="background-color:${hex}" 
+                     onclick="handleSwatchClick('${hex}', ${idx})" 
+                     oncontextmenu="removeSwatch(event, '${hex}')"
+                     title="Клик — выбрать, ПКМ / долгий тап — удалить"></div>
+            `).join(''); 
         }
 
         function handleSwatchClick(hex, index) { 
@@ -1098,20 +1078,82 @@
             renderQuickSwatchesBar(); 
         }
 
-        function openColorPickerForNewSwatch() {
-            document.getElementById('hidden-color-picker').click();
+        function removeSwatch(e, hex) {
+            e.preventDefault();
+            const targetSwatches = (currentTool === 'highlighter') ? highlighterSwatches : penSwatches;
+            if (targetSwatches.length <= 1) { alert('Нужно оставить хотя бы один цвет в палитре!'); return; }
+            const idx = targetSwatches.indexOf(hex);
+            if (idx > -1) {
+                targetSwatches.splice(idx, 1);
+                if (currentTool === 'highlighter' && selectedHlSwatch === hex) selectedHlSwatch = highlighterSwatches[0];
+                if (currentTool !== 'highlighter' && selectedPenSwatch === hex) selectedPenSwatch = penSwatches[0];
+                saveData();
+                renderQuickSwatchesBar();
+            }
         }
 
-        function onCustomColorPicked(e) {
-            const hex = e.target.value;
-            const activeSwatches = (currentTool === 'highlighter') ? highlighterSwatches : penSwatches;
-            if(!activeSwatches.includes(hex) && activeSwatches.length < 20) {
-                activeSwatches.push(hex);
+        function openAddSwatchPrompt() {
+            const targetSwatches = (currentTool === 'highlighter') ? highlighterSwatches : penSwatches;
+            if (targetSwatches.length >= 20) { alert('Максимум 20 цветов в палитре!'); return; }
+            
+            const input = document.createElement('input');
+            input.type = 'color';
+            input.value = (currentTool === 'highlighter') ? selectedHlSwatch : selectedPenSwatch;
+            input.onchange = (e) => {
+                const newColor = e.target.value;
+                if (!targetSwatches.includes(newColor)) {
+                    targetSwatches.push(newColor);
+                    if (currentTool === 'highlighter') selectedHlSwatch = newColor; else selectedPenSwatch = newColor;
+                    saveData();
+                    renderQuickSwatchesBar();
+                }
+            };
+            input.click();
+        }
+
+        function toggleEyedropper() {
+            isEyedropperActive = !isEyedropperActive;
+            const btn = document.getElementById('tool-eyedropper');
+            if (isEyedropperActive) {
+                btn.style.background = '#2383e2';
+                btn.style.color = 'white';
+                alert('Пипетка включена! Кликните на любой штрих на странице, чтобы взять его цвет.');
+            } else {
+                btn.style.background = '';
+                btn.style.color = '';
             }
-            if(currentTool === 'highlighter') selectedHlSwatch = hex;
-            else selectedPenSwatch = hex;
-            renderQuickSwatchesBar();
-            saveData();
+        }
+
+        function pickColorFromCanvas(pageIdx, x, y) {
+            const pageObj = currentNotebook.pages[pageIdx];
+            if (!pageObj || !pageObj.objects) return;
+            
+            let pickedColor = null;
+            // Ищем объект под курсором в обратном порядке (сверху вниз)
+            for (let i = pageObj.objects.length - 1; i >= 0; i--) {
+                const obj = pageObj.objects[i];
+                if (obj.type === 'stroke') {
+                    const found = obj.points.some(pt => Math.hypot(pt.x - x, pt.y - y) < (obj.size / 2 + 5));
+                    if (found) { pickedColor = obj.color; break; }
+                }
+            }
+
+            if (pickedColor) {
+                const targetSwatches = (currentTool === 'highlighter') ? highlighterSwatches : penSwatches;
+                if (!targetSwatches.includes(pickedColor)) {
+                    if (targetSwatches.length < 20) targetSwatches.push(pickedColor);
+                }
+                if (currentTool === 'highlighter') selectedHlSwatch = pickedColor; else selectedPenSwatch = pickedColor;
+                saveData();
+                renderQuickSwatchesBar();
+                alert(`Цвет ${pickedColor} успешно добавлен в палитру и выбран!`);
+            } else {
+                alert('Тут нет штрихов, попробуйте кликнуть прямо по рисунку.');
+            }
+
+            isEyedropperActive = false;
+            document.getElementById('tool-eyedropper').style.background = '';
+            document.getElementById('tool-eyedropper').style.color = '';
         }
         
         function closeAllPopovers() {
@@ -1132,6 +1174,9 @@
                 document.getElementById('tool-' + (currentTool||'pen')).classList.add('active');
             }
             if(t !== 'template') currentTool = t;
+            isEyedropperActive = false;
+            document.getElementById('tool-eyedropper').style.background = '';
+            document.getElementById('tool-eyedropper').style.color = '';
             renderQuickSwatchesBar();
         }
 
@@ -1142,7 +1187,6 @@
         function updateEraserSize(val) { eraserState.size = parseInt(val); document.getElementById('val-eraser-size').innerText = val + ' px'; saveData(); }
         function updateEraserFilter(k, val) { eraserState.filters[k] = val; saveData(); }
 
-        // ШАБЛОНЫ И ЦВЕТА СТРАНИЦЫ
         function setPagePattern(pattern) {
             const pageObj = currentNotebook.pages[activePageIndex];
             if(pageObj) {
@@ -1180,7 +1224,6 @@
             alert('Шаблон применен ко всем страницам!');
         }
 
-        // ЭКСПОРТ
         function openExportModal() { document.getElementById('export-modal').style.display = 'flex'; }
         
         function exportNotebookAsImage() {
